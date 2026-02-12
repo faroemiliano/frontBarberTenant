@@ -62,16 +62,11 @@ export default function BookingModal({
   async function handleSubmit() {
     if (!horario || !servicio) return;
 
-    const precioFinal =
-      Number(
-        (document.getElementById("precio-input") as HTMLInputElement)?.value,
-      ) || 0;
-
     setLoading(true);
     await onSubmit({
       telefono,
       servicio,
-      precio: precioFinal,
+      precio,
       horario,
     });
     setLoading(false);
@@ -110,10 +105,13 @@ export default function BookingModal({
 
         {/* PRECIO */}
         <input
-          id="precio-input"
           type="number"
           placeholder="Precio"
-          defaultValue={turnoInicial?.precio ?? 0}
+          min={0}
+          value={precio}
+          onChange={(e) =>
+            setPrecio(e.target.value === "" ? 0 : Number(e.target.value))
+          }
         />
 
         {/* RESUMEN */}

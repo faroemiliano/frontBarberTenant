@@ -1,4 +1,5 @@
 import GoogleLoginButton from "./GoogleLoginButton";
+import bgLogin from "../assets/logoTitulo2.png";
 
 interface Props {
   onSuccess: () => void;
@@ -8,7 +9,10 @@ interface Props {
 export default function Login({ onSuccess, onClose }: Props) {
   return (
     <div className="auth-modal">
-      <div className="auth-modal-box">
+      <div
+        className="auth-modal-box"
+        style={{ backgroundImage: `url(${bgLogin})` }}
+      >
         {/* ❌ BOTÓN CERRAR */}
         <button className="auth-close" onClick={onClose}>
           ×

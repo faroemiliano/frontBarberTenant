@@ -1,19 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import Hero from "./components/Hero";
-import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 import Modal from "./components/Modal";
-import CutsGallery from "./components/CutsGallery";
 import { getUser, logout } from "./auth";
-import AdminPanel from "./components/admin/AdminPanel";
-import AdminTurnos from "./components/admin/AdminTurnos";
-import AdminGanancias from "./components/admin/AdminGanancias";
-import Footer from "./components/Footer";
+
+// 🔥 Lazy loaded pages/components
+const Hero = lazy(() => import("./components/Hero"));
+const Login = lazy(() => import("./components/Login"));
+const CutsGallery = lazy(() => import("./components/CutsGallery"));
+const Footer = lazy(() => import("./components/Footer"));
+
+const AdminPanel = lazy(() => import("./components/admin/AdminPanel"));
+const AdminTurnos = lazy(() => import("./components/admin/AdminTurnos"));
+const AdminGanancias = lazy(() => import("./components/admin/AdminGanancias"));
+const AdminServicios = lazy(() => import("./components/admin/AdminServicios"));
 
 import "./styles.css";
-import AdminServicios from "./components/admin/AdminServicios";
+
+function Loader() {
+  return (
+    <div
+      style={{
+        minHeight: "40vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        fontWeight: 600,
+      }}
+    >
+      Cargando...
+    </div>
+  );
+}
 
 export default function App() {
   const [user, setUser] = useState(getUser());
@@ -38,47 +58,50 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      <Routes>
-        {/* PUBLIC */}
-        <Route
-          path="/"
-          element={
-            user?.is_admin ? (
-              <AdminPanel />
-            ) : (
-              <>
-                <Hero user={user} onLogin={() => setShowLogin(true)} />
-                <div className="hero-divider" />
-                <CutsGallery />
-                <Footer />
-              </>
-            )
-          }
-        />
+      <Suspense fallback={<Loader />}>
+        <Routes>
+          {/* PUBLIC */}
+          <Route
+            path="/"
+            element={
+              user?.is_admin ? (
+                <AdminPanel />
+              ) : (
+                <>
+                  <Hero user={user} onLogin={() => setShowLogin(true)} />
+                  <div className="hero-divider" />
+                  <CutsGallery />
+                  <Footer />
+                </>
+              )
+            }
+          />
 
-        {/* ADMIN */}
-        <Route
-          path="/admin"
-          element={user?.is_admin ? <AdminPanel /> : <Navigate to="/" />}
-        >
-          {/* 👉 cuando entrás a /admin */}
-          <Route index element={<Navigate to="turnos" />} />
-          <Route path="turnos" element={<AdminTurnos />} />
-          <Route path="ganancias" element={<AdminGanancias />} />
-          <Route path="servicios" element={<AdminServicios />} /> {/* 🆕 */}
-        </Route>
-      </Routes>
+          {/* ADMIN */}
+          <Route
+            path="/admin"
+            element={user?.is_admin ? <AdminPanel /> : <Navigate to="/" />}
+          >
+            <Route index element={<Navigate to="turnos" />} />
+            <Route path="turnos" element={<AdminTurnos />} />
+            <Route path="ganancias" element={<AdminGanancias />} />
+            <Route path="servicios" element={<AdminServicios />} />
+          </Route>
+        </Routes>
+      </Suspense>
 
       {/* ================= LOGIN MODAL ================= */}
       {showLogin && (
         <Modal onClose={() => setShowLogin(false)}>
-          <Login
-            onSuccess={() => {
-              setUser(getUser());
-              setShowLogin(false);
-            }}
-            onClose={() => setShowLogin(false)}
-          />
+          <Suspense fallback={<Loader />}>
+            <Login
+              onSuccess={() => {
+                setUser(getUser());
+                setShowLogin(false);
+              }}
+              onClose={() => setShowLogin(false)}
+            />
+          </Suspense>
         </Modal>
       )}
     </>

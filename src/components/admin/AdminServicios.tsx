@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "../../api";
 
 interface Servicio {
   id: number;
   nombre: string;
   precio: number;
 }
-
-const API_URL = "http://localhost:8000";
 
 export default function AdminServicios() {
   const [servicios, setServicios] = useState<Servicio[]>([]);
@@ -19,7 +18,7 @@ export default function AdminServicios() {
 
   const fetchServicios = async () => {
     try {
-      const res = await fetch(`${API_URL}/admin/servicios`, {
+      const res = await apiFetch("/admin/servicios", {
         credentials: "include",
       });
       const data = await res.json();
@@ -37,7 +36,7 @@ export default function AdminServicios() {
     try {
       await Promise.all(
         servicios.map((s) =>
-          fetch(`${API_URL}/admin/servicios/${s.id}`, {
+          apiFetch(`/admin/servicios/${s.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             credentials: "include",

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Calendar from "./Calendar";
 import { getToken } from "../auth";
+import { apiFetch } from "../api";
 
 /* =========================
    TIPOS
@@ -69,7 +70,7 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/reservar", {
+      const res = await apiFetch("/reservar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

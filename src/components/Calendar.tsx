@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "../api";
 
 interface Horario {
   id: number;
@@ -25,16 +26,13 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
 
   async function toggleHorarioAdmin(h: Horario) {
     try {
-      const res = await fetch(
-        `http://127.0.0.1:8000/admin/horarios/${h.id}/toggle`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+      const res = await apiFetch(`/admin/horarios/${h.id}/toggle`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      );
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail);
@@ -53,12 +51,9 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
   useEffect(() => {
     setLoading(true);
 
-    const url =
-      mode === "admin"
-        ? "http://127.0.0.1:8000/admin/calendario"
-        : "http://127.0.0.1:8000/calendario";
+    const path = mode === "admin" ? "/admin/calendario" : "/calendario";
 
-    fetch(url, {
+    apiFetch(path, {
       headers:
         mode === "admin"
           ? { Authorization: `Bearer ${localStorage.getItem("token")}` }

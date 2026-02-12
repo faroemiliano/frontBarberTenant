@@ -135,7 +135,7 @@ section {
 .hero {
   position: relative;
   height: 100vh;
-  background: url("./assets/fondoPantalla.png") center/cover no-repeat;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -423,7 +423,6 @@ section {
   padding: 40px 32px;
   border-radius: 28px;
 
-  background-image: url("./assets//logoTitulo.jpeg");
   background-size: cover;
   background-position: center;
   display: flex;

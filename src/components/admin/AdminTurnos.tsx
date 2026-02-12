@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getToken } from "../../auth";
 import BookingModal from "../BookingModal";
 import Calendar from "../Calendar";
+import { apiFetch } from "../../api";
 import { notifyGananciasUpdate } from "../../events/gananciasEvents";
 
 interface Turno {
@@ -56,7 +57,7 @@ export default function AdminPanel() {
   }, [turnos, diaActivo]);
 
   const cargarTurnos = async () => {
-    const res = await fetch("http://127.0.0.1:8000/admin/turnos", {
+    const res = await apiFetch("/admin/turnos", {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
     const data = await res.json();
@@ -65,7 +66,7 @@ export default function AdminPanel() {
   };
 
   const cancelarTurno = async (id: number) => {
-    await fetch(`http://127.0.0.1:8000/admin/cancelar/${id}`, {
+    await apiFetch(`/admin/cancelar/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${getToken()}` },
     });
@@ -202,17 +203,14 @@ export default function AdminPanel() {
               payload.servicio_id = serviciosMap[servicio];
             }
 
-            const res = await fetch(
-              `http://127.0.0.1:8000/admin/turnos/${turnoId}`,
-              {
-                method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${getToken()}`,
-                },
-                body: JSON.stringify(payload),
+            const res = await apiFetch(`/admin/turnos/${turnoId}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getToken()}`,
               },
-            );
+              body: JSON.stringify(payload),
+            });
 
             if (!res.ok) {
               alert("No se pudo actualizar");

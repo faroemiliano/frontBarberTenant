@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getToken } from "../../auth";
+import { apiFetch } from "../../api";
 
 /* =====================
    TIPOS
@@ -85,7 +86,7 @@ function ModalDetalle({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/admin/ganancias/detalle?fecha=${fecha}`, {
+    apiFetch(`/admin/ganancias/detalle?fecha=${fecha}`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then((r) => r.json())
@@ -146,13 +147,11 @@ function GraficoPie({ tipo }: { tipo: "dia" | "mes" }) {
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [modalMesOpen, setModalMesOpen] = useState(false);
 
-  const [servicioSel, setServicioSel] = useState<string | null>(null);
-
   const cargarDatos = async () => {
-    let url = `http://127.0.0.1:8000/admin/ganancias/grafico?tipo=${tipo}`;
+    let url = `/admin/ganancias/grafico?tipo=${tipo}`;
     if (tipo === "dia") url += `&fecha=${fecha}`;
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
 
@@ -197,7 +196,7 @@ function GraficoPie({ tipo }: { tipo: "dia" | "mes" }) {
               label={(e: any) =>
                 `${e.servicio}: $${e.total.toLocaleString("es-AR")}`
               }
-              onClick={(e: any) => {
+              onClick={() => {
                 if (tipo === "dia") {
                   setModalDetalleOpen(true);
                 }
