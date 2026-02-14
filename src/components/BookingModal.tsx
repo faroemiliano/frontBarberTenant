@@ -1,10 +1,17 @@
 import Calendar from "./Calendar";
 import { useState, useEffect } from "react";
+import { apiFetch } from "../api";
 
 interface HorarioSeleccionado {
   id: number;
   fecha: string;
   hora: string;
+}
+
+interface Servicio {
+  id: number;
+  nombre: string;
+  precio: number;
 }
 
 interface BookingModalProps {
@@ -33,27 +40,31 @@ export default function BookingModal({
   onSubmit,
 }: BookingModalProps) {
   const [telefono, setTelefono] = useState("");
-  const [servicio, setServicio] = useState("");
+  const [servicio, setServicio] = useState<Servicio | null>(null);
+  const [servicios, setServicios] = useState<Servicio[]>([]);
   const [precio, setPrecio] = useState(0);
   const [horario, setHorario] = useState<HorarioSeleccionado | null>(null);
   const [editandoHorario, setEditandoHorario] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    apiFetch("/servicios")
+      .then((res) => res.json())
+      .then((data) => setServicios(data));
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
 
     if (turnoInicial) {
       setTelefono(turnoInicial.telefono);
-      setServicio(turnoInicial.servicio);
       setPrecio(turnoInicial.precio ?? 0);
       setHorario(turnoInicial.horario);
-      setEditandoHorario(false);
     } else {
       setTelefono("");
-      setServicio("");
+      setServicio(null);
       setPrecio(0);
       setHorario(null);
-      setEditandoHorario(false);
     }
   }, [open, turnoInicial]);
 
@@ -65,7 +76,7 @@ export default function BookingModal({
     setLoading(true);
     await onSubmit({
       telefono,
-      servicio,
+      servicio: servicio.nombre,
       precio,
       horario,
     });
@@ -82,28 +93,28 @@ export default function BookingModal({
 
         <h2>{modo === "editar" ? "Editar turno" : "Nuevo turno"}</h2>
 
-        {/* SERVICIOS */}
         <div className="services-grid">
-          {["Corte", "Corte y Barba", "Corte y Tintura", "Barba"].map((s) => (
+          {servicios.map((s) => (
             <button
-              key={s}
+              key={s.id}
               type="button"
-              className={`service-card ${servicio === s ? "active" : ""}`}
-              onClick={() => setServicio(s)}
+              className={`service-card ${servicio?.id === s.id ? "active" : ""}`}
+              onClick={() => {
+                setServicio(s);
+                setPrecio(s.precio);
+              }}
             >
-              {s}
+              {s.nombre}
             </button>
           ))}
         </div>
 
-        {/* TELÉFONO */}
         <input
           placeholder="Teléfono"
           value={telefono}
           onChange={(e) => setTelefono(e.target.value)}
         />
 
-        {/* PRECIO */}
         <input
           type="number"
           placeholder="Precio"
@@ -114,12 +125,12 @@ export default function BookingModal({
           }
         />
 
-        {/* RESUMEN */}
         {horario && !editandoHorario && (
           <>
             <div className="horario-resumen">
               <p>
-                Fecha: {horario.fecha} <br />
+                Fecha: {horario.fecha}
+                <br />
                 Hora: {horario.hora}
               </p>
 
@@ -146,7 +157,6 @@ export default function BookingModal({
           </>
         )}
 
-        {/* CALENDARIO */}
         {editandoHorario && (
           <Calendar
             onConfirm={(nuevoHorario) => {

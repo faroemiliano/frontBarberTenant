@@ -1,11 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Calendar from "./Calendar";
 import { getToken } from "../auth";
 import { apiFetch } from "../api";
-
-/* =========================
-   TIPOS
-========================= */
 
 interface HorarioSeleccionado {
   id: number;
@@ -16,24 +12,18 @@ interface HorarioSeleccionado {
 interface Servicio {
   id: number;
   nombre: string;
+  precio: number;
 }
-
-/* =========================
-   HELPERS
-========================= */
 
 function parseLocalDate(dateStr: string) {
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
-/* =========================
-   COMPONENTE
-========================= */
-
 export default function BookingUser({ onClose }: { onClose: () => void }) {
   const [telefono, setTelefono] = useState("");
   const [servicio, setServicio] = useState<Servicio | null>(null);
+  const [servicios, setServicios] = useState<Servicio[]>([]);
   const [mensaje, setMensaje] = useState("");
   const [loading, setLoading] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
@@ -41,28 +31,19 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
   const [horario, setHorario] = useState<HorarioSeleccionado | null>(null);
   const [horarioConfirmado, setHorarioConfirmado] = useState(false);
 
-  /* =========================
-     SERVICIOS (por ahora fijos)
-     IDs deben coincidir con DB
-  ========================= */
-
-  const servicios: Servicio[] = [
-    { id: 1, nombre: "Corte" },
-    { id: 2, nombre: "Corte y Barba" },
-    { id: 3, nombre: "Corte y Tintura" },
-    { id: 4, nombre: "Barba" },
-  ];
-
-  /* =========================
-     RESERVAR
-  ========================= */
+  /* CARGAR SERVICIOS DESDE BACKEND */
+  useEffect(() => {
+    apiFetch("/servicios")
+      .then((res) => res.json())
+      .then((data) => setServicios(data))
+      .catch(() => setMensaje("No se pudieron cargar los servicios"));
+  }, []);
 
   async function reservar() {
     setMensaje("");
 
     const token = getToken();
     if (!token) return setMensaje("Tenés que iniciar sesión");
-
     if (!servicio) return setMensaje("Seleccioná un servicio");
     if (!telefono.trim()) return setMensaje("Ingresá tu teléfono");
     if (!horario) return setMensaje("Seleccioná fecha y horario");
@@ -78,7 +59,7 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
         },
         body: JSON.stringify({
           telefono,
-          servicio_id: servicio.id, // ✅ CLAVE
+          servicio_id: servicio.id,
           horario_id: horario.id,
         }),
       });
@@ -90,7 +71,6 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
         return;
       }
 
-      /* RESET */
       setSuccessOpen(true);
       setTelefono("");
       setServicio(null);
@@ -104,15 +84,10 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
     }
   }
 
-  /* =========================
-     RENDER
-  ========================= */
-
   return (
     <>
       <h2>Reservar turno</h2>
 
-      {/* SERVICIOS */}
       <div className="services-grid">
         {servicios.map((s) => (
           <button
@@ -125,14 +100,12 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
         ))}
       </div>
 
-      {/* TELÉFONO */}
       <input
         placeholder="Teléfono"
         value={telefono}
         onChange={(e) => setTelefono(e.target.value)}
       />
 
-      {/* CALENDARIO */}
       {!horarioConfirmado && (
         <Calendar
           onConfirm={(h) => {
@@ -142,11 +115,10 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
         />
       )}
 
-      {/* RESUMEN */}
       {horarioConfirmado && horario && servicio && (
         <div className="resume-box">
           <p>
-            ✂️ Servicio: <strong>{servicio.nombre}</strong>
+            ✂️ <strong>{servicio.nombre}</strong>
           </p>
           <p>📅 {parseLocalDate(horario.fecha).toLocaleDateString("es-AR")}</p>
           <p>⏰ {horario.hora}</p>
@@ -163,17 +135,14 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
-      {/* MENSAJE */}
       {mensaje && <p className="modal-msg">{mensaje}</p>}
 
-      {/* CONFIRMAR */}
       {horarioConfirmado && (
         <button className="confirm" disabled={loading} onClick={reservar}>
           {loading ? "Reservando..." : "Confirmar reserva"}
         </button>
       )}
 
-      {/* ÉXITO */}
       {successOpen && (
         <div className="success">
           <h2>¡Reserva confirmada! 🎉</h2>

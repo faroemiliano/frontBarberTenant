@@ -45,6 +45,9 @@ function isoToDMY(fechaISO: string) {
 
 export default function AdminPanel() {
   const [turnos, setTurnos] = useState<Turno[]>([]);
+  const [servicios, setServicios] = useState<{ id: number; nombre: string }[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [turnoEditando, setTurnoEditando] = useState<Turno | null>(null);
   const [turnoAEliminar, setTurnoAEliminar] = useState<Turno | null>(null);
@@ -78,6 +81,10 @@ export default function AdminPanel() {
 
   useEffect(() => {
     cargarTurnos();
+
+    apiFetch("/servicios")
+      .then((res) => res.json())
+      .then(setServicios);
   }, []);
 
   if (loading) return <p>Cargando turnos...</p>;
@@ -183,13 +190,6 @@ export default function AdminPanel() {
               precio: precioNumber,
             });
 
-            const serviciosMap: Record<string, number> = {
-              Corte: 1,
-              Barba: 2,
-              "Corte y Barba": 3,
-              "Corte y Tintura": 4,
-            };
-
             const payload: Record<string, any> = {
               telefono,
               precio: precioNumber,
@@ -199,8 +199,9 @@ export default function AdminPanel() {
               payload.horario_id = horario.id;
             }
 
-            if (serviciosMap[servicio]) {
-              payload.servicio_id = serviciosMap[servicio];
+            const servicioReal = servicios.find((s) => s.nombre === servicio);
+            if (servicioReal) {
+              payload.servicio_id = servicioReal.id;
             }
 
             const res = await apiFetch(`/admin/turnos/${turnoId}`, {
