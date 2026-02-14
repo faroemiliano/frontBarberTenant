@@ -33,7 +33,7 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
 
   /* CARGAR SERVICIOS DESDE BACKEND */
   useEffect(() => {
-    apiFetch("/servicios")
+    apiFetch("/admin/servicios")
       .then((res) => res.json())
       .then((data) => setServicios(data))
       .catch(() => setMensaje("No se pudieron cargar los servicios"));

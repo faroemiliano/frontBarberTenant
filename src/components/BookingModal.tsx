@@ -48,7 +48,7 @@ export default function BookingModal({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    apiFetch("/servicios")
+    apiFetch("/admin/servicios")
       .then((res) => res.json())
       .then((data) => setServicios(data));
   }, []);

@@ -82,7 +82,7 @@ export default function AdminPanel() {
   useEffect(() => {
     cargarTurnos();
 
-    apiFetch("/servicios")
+    apiFetch("/admin/servicios")
       .then((res) => res.json())
       .then(setServicios);
   }, []);
