@@ -12,49 +12,55 @@ interface Props {
   onConfirm?: (horario: { id: number; fecha: string; hora: string }) => void;
   mode?: "user" | "admin";
 }
+
 function parseLocalDate(dateStr: string) {
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
+function todayISO() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export default function Calendar({ onConfirm, mode = "user" }: Props) {
   const [horarios, setHorarios] = useState<Horario[]>([]);
+  const [dias, setDias] = useState<string[]>([]);
   const [diaActivo, setDiaActivo] = useState<string | null>(null);
   const [horarioActivo, setHorarioActivo] = useState<Horario | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
 
+  const DIAS_POR_PAGINA = 5;
+
   async function toggleHorarioAdmin(h: Horario) {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
       const res = await apiFetch(`/admin/horarios/${h.id}/toggle`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
+      if (!res.ok) throw new Error("Error al cambiar horario");
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail);
 
       setHorarios((prev) =>
         prev.map((x) =>
           x.id === h.id ? { ...x, disponible: data.disponible } : x,
         ),
       );
-    } catch (e: any) {
-      alert(e.message || "No se pudo cambiar el horario");
+    } catch (e) {
+      alert("No se pudo cambiar el horario");
     }
   }
-
-  function todayISO() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }
-  const DIAS_POR_PAGINA = 5;
 
   useEffect(() => {
     setLoading(true);
@@ -71,35 +77,30 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
       .then((data: Horario[]) => {
         setHorarios(data);
 
-        const uniqueDays = Array.from(
-          new Set(data.map((h) => h.fecha)),
-        ) as string[];
-        const hoy = todayISO();
+        // 🔥 Guardamos los días ORDENADOS en estado
+        const uniqueDays = Array.from(new Set(data.map((h) => h.fecha))).sort();
 
+        setDias(uniqueDays);
+
+        // 🔥 Posicionarnos en HOY
+        const hoy = todayISO();
         const indexHoy = uniqueDays.findIndex((d) => d >= hoy);
 
         if (indexHoy !== -1) {
           setPage(Math.floor(indexHoy / DIAS_POR_PAGINA));
+          setDiaActivo(uniqueDays[indexHoy]);
         }
       })
       .finally(() => setLoading(false));
   }, [mode]);
 
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-
-  const horariosFuturos = horarios;
-  const hayDisponibles = horariosFuturos.some((h) => h.disponible);
-
-  const dias = Array.from(new Set(horariosFuturos.map((h) => h.fecha)));
-
   const inicio = page * DIAS_POR_PAGINA;
   const fin = inicio + DIAS_POR_PAGINA;
-
   const diasVisibles = dias.slice(inicio, fin);
 
-  const horariosDelDia = horariosFuturos.filter((h) => h.fecha === diaActivo);
-  /* 🔴 CARTEL CUANDO NO HAY NADA */
+  const horariosDelDia = horarios.filter((h) => h.fecha === diaActivo);
+  const hayDisponibles = horarios.some((h) => h.disponible);
+
   if (!loading && !hayDisponibles && mode === "user") {
     return (
       <div className="no-slots">
@@ -115,6 +116,7 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
 
   return (
     <>
+      {/* NAVEGACIÓN */}
       <div className="week-nav">
         <button
           disabled={page === 0}
@@ -138,6 +140,7 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
           ➡️
         </button>
       </div>
+
       {/* DÍAS */}
       <div className="days-grid">
         {diasVisibles.map((d) => {
@@ -176,9 +179,9 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
                 <button
                   key={h.id}
                   className={`hour-card
-    ${horarioActivo?.id === h.id ? "active" : ""}
-    ${!h.disponible ? "blocked" : ""}
-  `}
+                    ${horarioActivo?.id === h.id ? "active" : ""}
+                    ${!h.disponible ? "blocked" : ""}
+                  `}
                   onClick={() => {
                     if (mode === "admin") {
                       toggleHorarioAdmin(h);
@@ -195,7 +198,7 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
         </>
       )}
 
-      {/* CONFIRMAR */}
+      {/* CONFIRMAR (solo user) */}
       {mode === "user" && horarioActivo && (
         <button
           className="confirm"
