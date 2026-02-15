@@ -46,6 +46,14 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
       alert(e.message || "No se pudo cambiar el horario");
     }
   }
+
+  function todayISO() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
   const DIAS_POR_PAGINA = 5;
 
   useEffect(() => {
@@ -60,8 +68,19 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
           : undefined,
     })
       .then((r) => r.json())
-      .then((data) => {
+      .then((data: Horario[]) => {
         setHorarios(data);
+
+        const uniqueDays = Array.from(
+          new Set(data.map((h) => h.fecha)),
+        ) as string[];
+        const hoy = todayISO();
+
+        const indexHoy = uniqueDays.findIndex((d) => d >= hoy);
+
+        if (indexHoy !== -1) {
+          setPage(Math.floor(indexHoy / DIAS_POR_PAGINA));
+        }
       })
       .finally(() => setLoading(false));
   }, [mode]);
