@@ -44,7 +44,7 @@ function isoToDMY(fecha: string) {
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 /* =====================
-   MODAL DETALLE
+   MODAL TOTAL MES
 ===================== */
 
 function ModalTotalMes({
@@ -59,9 +59,7 @@ function ModalTotalMes({
       <div className="modal-box">
         <h3>Total del mes</h3>
 
-        <p style={{ fontSize: 28, fontWeight: "bold", margin: "20px 0" }}>
-          ${total.toLocaleString("es-AR")}
-        </p>
+        <p className="modal-total">${total.toLocaleString("es-AR")}</p>
 
         <button className="btn-secondary" onClick={onClose}>
           Cerrar
@@ -140,50 +138,107 @@ function ModalDetalle({
    GRAFICO PIE
 ===================== */
 
-function GraficoPie({ tipo }: { tipo: "dia" | "mes" }) {
+function GraficoPie({
+  tipo,
+  fecha,
+  setFecha,
+}: {
+  tipo: "dia" | "mes";
+  fecha: Date;
+  setFecha: React.Dispatch<React.SetStateAction<Date>>;
+}) {
   const [data, setData] = useState<GananciaServicio[]>([]);
-  const [fecha, setFecha] = useState(fechaLocalISO());
+  const [total, setTotal] = useState(0);
 
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [modalMesOpen, setModalMesOpen] = useState(false);
 
+  /* ===== cargar datos ===== */
   const cargarDatos = async () => {
-    let url = `/admin/ganancias/grafico?tipo=${tipo}`;
-    if (tipo === "dia") url += `&fecha=${fecha}`;
+    const fechaISO = fechaLocalISO(fecha);
+    const mesISO = fechaISO.slice(0, 7);
 
-    const res = await apiFetch(url, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    });
+    let urlGrafico = `/admin/ganancias/grafico?tipo=${tipo}`;
+    let urlTotal = `/admin/ganancias?tipo=${tipo}`;
 
-    setData(await res.json());
+    if (tipo === "dia") {
+      urlGrafico += `&fecha=${fechaISO}`;
+      urlTotal += `&fecha=${fechaISO}`;
+    } else {
+      urlGrafico += `&mes=${mesISO}`;
+      urlTotal += `&mes=${mesISO}`;
+    }
+
+    const [graficoRes, totalRes] = await Promise.all([
+      apiFetch(urlGrafico, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      }),
+      apiFetch(urlTotal, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      }),
+    ]);
+
+    const graficoJson: GananciaServicio[] = await graficoRes.json();
+    const totalJson: { total: number } = await totalRes.json();
+
+    setData(graficoJson);
+    setTotal(totalJson.total);
   };
 
+  /* ===== useEffect que depende directamente de fecha y tipo ===== */
   useEffect(() => {
     cargarDatos();
-  }, [tipo, fecha]);
+  }, [fecha, tipo]);
 
+  /* ===== mover día/mes ===== */
   const moverDia = (delta: number) => {
-    const [y, m, d] = fecha.split("-").map(Number);
-    const date = new Date(y, m - 1, d);
-    date.setDate(date.getDate() + delta);
-    setFecha(fechaLocalISO(date));
+    setFecha((prev) => {
+      const nueva = new Date(prev);
+      nueva.setDate(nueva.getDate() + delta);
+      return nueva;
+    });
   };
 
-  const totalMes = data.reduce((acc, i) => acc + i.total, 0);
+  const moverMes = (delta: number) => {
+    setFecha((prev) => {
+      const nueva = new Date(prev);
+      nueva.setMonth(nueva.getMonth() + delta);
+      return nueva;
+    });
+  };
 
   return (
-    <div style={{ width: "48%", padding: 10 }}>
-      <h3 style={{ textAlign: "center" }}>{tipo}</h3>
+    <div className="grafico-wrapper">
+      <h3 className="grafico-title">{tipo === "dia" ? "Día" : "Mes"}</h3>
 
+      {/* navegación día */}
       {tipo === "dia" && (
-        <div style={{ textAlign: "center", marginBottom: 10 }}>
+        <div className="grafico-fecha">
           <button onClick={() => moverDia(-1)}>◀</button>
-          <span style={{ margin: "0 10px" }}>{isoToDMY(fecha)}</span>
+          <span>{isoToDMY(fechaLocalISO(fecha))}</span>
           <button onClick={() => moverDia(1)}>▶</button>
         </div>
       )}
 
-      <div style={{ width: "100%", height: 300 }}>
+      {/* navegación mes */}
+      {tipo === "mes" && (
+        <div className="grafico-fecha">
+          <button onClick={() => moverMes(-1)}>◀</button>
+          <span>
+            {fecha.toLocaleDateString("es-AR", {
+              month: "long",
+              year: "numeric",
+            })}
+          </span>
+          <button onClick={() => moverMes(1)}>▶</button>
+        </div>
+      )}
+
+      <div className="grafico-total">
+        Total: ${total.toLocaleString("es-AR")}
+      </div>
+
+      <div className="grafico-container">
         <ResponsiveContainer>
           <PieChart>
             <Pie
@@ -197,12 +252,8 @@ function GraficoPie({ tipo }: { tipo: "dia" | "mes" }) {
                 `${e.servicio}: $${e.total.toLocaleString("es-AR")}`
               }
               onClick={() => {
-                if (tipo === "dia") {
-                  setModalDetalleOpen(true);
-                }
-                if (tipo === "mes") {
-                  setModalMesOpen(true);
-                }
+                if (tipo === "dia") setModalDetalleOpen(true);
+                if (tipo === "mes") setModalMesOpen(true);
               }}
             >
               {data.map((_, i) => (
@@ -215,20 +266,16 @@ function GraficoPie({ tipo }: { tipo: "dia" | "mes" }) {
         </ResponsiveContainer>
       </div>
 
-      {/* MODAL DIA */}
-      {modalDetalleOpen && (
+      {/* MODALES */}
+      {modalDetalleOpen && tipo === "dia" && (
         <ModalDetalle
-          fecha={fecha}
+          fecha={fechaLocalISO(fecha)}
           onClose={() => setModalDetalleOpen(false)}
         />
       )}
 
-      {/* MODAL MES */}
       {modalMesOpen && tipo === "mes" && (
-        <ModalTotalMes
-          total={totalMes}
-          onClose={() => setModalMesOpen(false)}
-        />
+        <ModalTotalMes total={total} onClose={() => setModalMesOpen(false)} />
       )}
     </div>
   );
@@ -239,12 +286,16 @@ function GraficoPie({ tipo }: { tipo: "dia" | "mes" }) {
 ===================== */
 
 export default function AdminGanancias() {
+  const [fechaDia, setFechaDia] = useState(new Date());
+  const [fechaMes, setFechaMes] = useState(new Date());
+
   return (
     <div className="admin-card">
       <h2>Ganancias</h2>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <GraficoPie tipo="dia" />
-        <GraficoPie tipo="mes" />
+
+      <div className="admin-graficos">
+        <GraficoPie tipo="dia" fecha={fechaDia} setFecha={setFechaDia} />
+        <GraficoPie tipo="mes" fecha={fechaMes} setFecha={setFechaMes} />
       </div>
     </div>
   );

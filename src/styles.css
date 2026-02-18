@@ -1153,7 +1153,7 @@ section {
 .admin-card {
   background-color: #0f172a;
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 12px 60px;
   margin-bottom: 16px;
 }
 
@@ -1400,4 +1400,85 @@ section {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* =====================
+   CONTENEDOR PRINCIPAL
+===================== */
+
+.admin-card {
+  background-color: #0f172a;
+  border-radius: 12px;
+  padding: 20px 30px;
+  margin: 0 auto 20px auto;
+  max-width: 1300px;
+  width: 95%;
+}
+
+/* =====================
+   GRAFICOS
+===================== */
+
+.admin-graficos {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.grafico-wrapper {
+  width: 48%;
+  padding: 10px;
+  min-width: 0;
+}
+
+.grafico-title {
+  text-align: center;
+}
+
+.grafico-fecha {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.grafico-fecha span {
+  margin: 0 10px;
+}
+
+.grafico-container {
+  width: 100%;
+  height: 300px;
+}
+
+/* =====================
+   MODAL
+===================== */
+
+.modal-total {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+/* =====================
+   MOBILE
+===================== */
+
+@media (max-width: 768px) {
+  .admin-graficos {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .grafico-wrapper {
+    width: 100%;
+    padding: 10px 0;
+  }
+
+  .grafico-container {
+    height: 240px;
+  }
+
+  .admin-card {
+    padding: 16px;
+  }
 }
