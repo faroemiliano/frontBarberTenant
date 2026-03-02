@@ -97,7 +97,11 @@ export default function App() {
           <Route
             path="/barbero"
             element={
-              user?.rol === "barbero" ? <BarberoPanel /> : <Navigate to="/" />
+              user?.rol === "barbero" ? (
+                <BarberoPanel userId={user!.id} />
+              ) : (
+                <Navigate to="/" />
+              )
             }
           />
         </Routes>
