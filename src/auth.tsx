@@ -6,7 +6,7 @@ export function saveSession(
     id: number;
     email: string;
     nombre?: string;
-    is_admin: boolean;
+    rol: "admin" | "barbero" | "cliente";
   },
 ) {
   localStorage.setItem("token", token);
@@ -16,7 +16,7 @@ export function saveSession(
       id: user.id,
       email: user.email,
       nombre: user.nombre || "",
-      is_admin: user.is_admin,
+      rol: user.rol,
     }),
   );
 }
@@ -29,7 +29,7 @@ export function getUser(): {
   id: number;
   email: string;
   nombre: string;
-  is_admin: boolean;
+  rol: "admin" | "barbero" | "cliente";
 } | null {
   const raw = localStorage.getItem("user");
 
@@ -38,8 +38,7 @@ export function getUser(): {
   try {
     const user = JSON.parse(raw);
 
-    // validación mínima (MUY importante)
-    if (typeof user.id !== "number" || typeof user.is_admin !== "boolean") {
+    if (typeof user.id !== "number" || typeof user.rol !== "string") {
       throw new Error("Usuario inválido");
     }
 

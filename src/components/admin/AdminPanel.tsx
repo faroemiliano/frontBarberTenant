@@ -23,18 +23,26 @@ export default function AdminPanel() {
         >
           Ganancias
         </button>
-        {/* 🆕 SERVICIOS / PRECIOS */}
+
         <button
           onClick={() => navigate("/admin/servicios")}
           className="btn-secondary"
         >
           Servicios
         </button>
+
+        {/* 🆕 AUTORIZAR BARBERO */}
+        <button
+          onClick={() => navigate("/admin/autorizar-barbero")}
+          className="btn-secondary"
+        >
+          Autorizar Barbero
+        </button>
       </div>
 
       <hr />
 
-      {/* 👇 ACÁ SE RENDERIZA TURNOS O GANANCIAS */}
+      {/* 👇 ACÁ SE RENDERIZA TURNOS, GANANCIAS, SERVICIOS O AUTORIZAR BARBERO */}
       <Outlet />
     </section>
   );

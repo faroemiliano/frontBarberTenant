@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Booking from "./Booking";
+import MisTurnos from "./MisTurnos";
 import logoTitulo from "../assets/logoTitulo2.png";
 import locationLogo from "../assets/logos/logoUbi.png";
 import instagramLogo from "../assets/logos/logoInsta.png";
@@ -13,6 +14,7 @@ interface Props {
 
 export default function Hero({ user, onLogin }: Props) {
   const [openBooking, setOpenBooking] = useState(false);
+  const [misTurnos, setMisTurnos] = useState(false);
 
   return (
     <section className="hero" style={{ backgroundImage: `url(${fondo})` }}>
@@ -46,13 +48,40 @@ export default function Hero({ user, onLogin }: Props) {
 
         {/* LOGUEADO */}
         {user && !user.is_admin && (
-          <button className="cta" onClick={() => setOpenBooking(true)}>
-            Reservar turno
-          </button>
+          <div className="hero-actions">
+            <button
+              className="btn-secondary "
+              onClick={() => setOpenBooking(true)}
+            >
+              Reservar turno
+            </button>
+
+            <button
+              className="btn-secondary"
+              onClick={() => setMisTurnos(true)}
+            >
+              Mis turnos
+            </button>
+          </div>
         )}
       </div>
 
-      {openBooking && <Booking onClose={() => setOpenBooking(false)} />}
+      {/* MODALES */}
+      {openBooking && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <Booking onClose={() => setOpenBooking(false)} />
+          </div>
+        </div>
+      )}
+
+      {misTurnos && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <MisTurnos onClose={() => setMisTurnos(false)} />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

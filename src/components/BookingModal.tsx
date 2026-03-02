@@ -18,15 +18,16 @@ interface BookingModalProps {
   open: boolean;
   onClose: () => void;
   modo: "crear" | "editar";
+  soloHorarioYServicio?: boolean; // 🔥 CORRECTO
   turnoInicial?: {
     telefono: string;
-    servicio: string;
+    servicio_id: number;
     precio: number;
     horario: HorarioSeleccionado | null;
   };
   onSubmit: (data: {
     telefono: string;
-    servicio: string;
+    servicio_id: number;
     precio: number;
     horario: HorarioSeleccionado;
   }) => Promise<void>;
@@ -37,6 +38,7 @@ export default function BookingModal({
   onClose,
   modo,
   turnoInicial,
+  soloHorarioYServicio = false,
   onSubmit,
 }: BookingModalProps) {
   const [telefono, setTelefono] = useState("");
@@ -60,13 +62,19 @@ export default function BookingModal({
       setTelefono(turnoInicial.telefono);
       setPrecio(turnoInicial.precio ?? 0);
       setHorario(turnoInicial.horario);
+
+      const servicioEncontrado = servicios.find(
+        (s) => s.id === turnoInicial.servicio_id,
+      );
+
+      setServicio(servicioEncontrado ?? null);
     } else {
       setTelefono("");
       setServicio(null);
       setPrecio(0);
       setHorario(null);
     }
-  }, [open, turnoInicial]);
+  }, [open, turnoInicial, servicios]);
 
   if (!open) return null;
 
@@ -74,12 +82,14 @@ export default function BookingModal({
     if (!horario || !servicio) return;
 
     setLoading(true);
+
     await onSubmit({
       telefono,
-      servicio: servicio.nombre,
+      servicio_id: servicio.id,
       precio,
       horario,
     });
+
     setLoading(false);
     onClose();
   }
@@ -112,6 +122,7 @@ export default function BookingModal({
         <input
           placeholder="Teléfono"
           value={telefono}
+          disabled={soloHorarioYServicio}
           onChange={(e) => setTelefono(e.target.value)}
         />
 
@@ -120,6 +131,7 @@ export default function BookingModal({
           placeholder="Precio"
           min={0}
           value={precio}
+          disabled={soloHorarioYServicio}
           onChange={(e) =>
             setPrecio(e.target.value === "" ? 0 : Number(e.target.value))
           }

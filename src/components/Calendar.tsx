@@ -3,14 +3,15 @@ import { apiFetch } from "../api";
 
 interface Horario {
   id: number;
-  fecha: string;
-  hora: string;
+  fecha: string; // YYYY-MM-DD
+  hora: string; // HH:MM
   disponible: boolean;
 }
 
 interface Props {
   onConfirm?: (horario: { id: number; fecha: string; hora: string }) => void;
-  mode?: "user" | "admin";
+  mode?: "user" | "admin" | "barbero";
+  barberoId?: number;
 }
 
 function parseLocalDate(dateStr: string) {
@@ -26,7 +27,11 @@ function todayISO() {
   return `${y}-${m}-${d}`;
 }
 
-export default function Calendar({ onConfirm, mode = "user" }: Props) {
+export default function Calendar({
+  onConfirm,
+  mode = "user",
+  barberoId,
+}: Props) {
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [dias, setDias] = useState<string[]>([]);
   const [diaActivo, setDiaActivo] = useState<string | null>(null);
@@ -36,63 +41,83 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
 
   const DIAS_POR_PAGINA = 5;
 
-  async function toggleHorarioAdmin(h: Horario) {
+  // 🔹 Toggle horario (solo admin o barbero)
+  async function toggleHorario(h: Horario) {
     try {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await apiFetch(`/admin/horarios/${h.id}/toggle`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await apiFetch(
+        mode === "admin"
+          ? `/admin/horarios/${h.id}/toggle`
+          : `/barbero/horarios/${h.id}/toggle`,
+        { method: "PATCH", headers: { Authorization: `Bearer ${token}` } },
+      );
 
       if (!res.ok) throw new Error("Error al cambiar horario");
 
-      const data = await res.json();
+      const data: { disponible: boolean } = await res.json();
 
       setHorarios((prev) =>
         prev.map((x) =>
           x.id === h.id ? { ...x, disponible: data.disponible } : x,
         ),
       );
-    } catch (e) {
+    } catch {
       alert("No se pudo cambiar el horario");
     }
   }
 
   useEffect(() => {
-    setLoading(true);
+    async function cargarHorarios() {
+      setLoading(true);
+      try {
+        let token = localStorage.getItem("token");
+        let headers: Record<string, string> | undefined;
 
-    const path = mode === "admin" ? "/admin/calendario" : "/calendario";
+        if (token && (mode === "admin" || mode === "barbero")) {
+          headers = { Authorization: `Bearer ${token}` };
+        }
 
-    apiFetch(path, {
-      headers:
-        mode === "admin"
-          ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
-          : undefined,
-    })
-      .then((r) => r.json())
-      .then((data: Horario[]) => {
+        let path = "";
+        if (mode === "admin") {
+          if (!barberoId) return; // admin siempre selecciona barbero
+          path = `/admin/calendario-admin/${barberoId}`;
+        } else if (mode === "barbero") {
+          path = "/barbero/horarios";
+        } else {
+          if (!barberoId) return;
+          path = `/calendario/${barberoId}`;
+        }
+
+        const res = await apiFetch(path, { headers });
+        if (!res.ok) throw new Error("Error cargando horarios");
+
+        const data: Horario[] = await res.json();
+        if (!Array.isArray(data)) throw new Error("Datos inválidos");
+
         setHorarios(data);
 
-        // 🔥 Guardamos los días ORDENADOS en estado
+        // 🔹 Días únicos y ordenados
         const uniqueDays = Array.from(new Set(data.map((h) => h.fecha))).sort();
-
         setDias(uniqueDays);
 
-        // 🔥 Posicionarnos en HOY
+        // 🔹 Posicionar en hoy si existe
         const hoy = todayISO();
         const indexHoy = uniqueDays.findIndex((d) => d >= hoy);
+        setPage(indexHoy !== -1 ? Math.floor(indexHoy / DIAS_POR_PAGINA) : 0);
+        setDiaActivo(
+          indexHoy !== -1 ? uniqueDays[indexHoy] : (uniqueDays[0] ?? null),
+        );
+      } catch (err) {
+        console.error("Error cargando horarios:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-        if (indexHoy !== -1) {
-          setPage(Math.floor(indexHoy / DIAS_POR_PAGINA));
-          setDiaActivo(uniqueDays[indexHoy]);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [mode]);
+    cargarHorarios();
+  }, [mode, barberoId]);
 
   const inicio = page * DIAS_POR_PAGINA;
   const fin = inicio + DIAS_POR_PAGINA;
@@ -100,6 +125,8 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
 
   const horariosDelDia = horarios.filter((h) => h.fecha === diaActivo);
   const hayDisponibles = horarios.some((h) => h.disponible);
+
+  if (loading) return <p>Cargando horarios...</p>;
 
   if (!loading && !hayDisponibles && mode === "user") {
     return (
@@ -116,7 +143,7 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
 
   return (
     <>
-      {/* NAVEGACIÓN */}
+      {/* Navegación */}
       <div className="week-nav">
         <button
           disabled={page === 0}
@@ -128,7 +155,6 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
         >
           ⬅️
         </button>
-
         <button
           disabled={fin >= dias.length}
           onClick={() => {
@@ -141,7 +167,7 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
         </button>
       </div>
 
-      {/* DÍAS */}
+      {/* Días */}
       <div className="days-grid">
         {diasVisibles.map((d) => {
           const date = parseLocalDate(d);
@@ -166,7 +192,7 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
         })}
       </div>
 
-      {/* HORARIOS */}
+      {/* Horarios */}
       {diaActivo && (
         <>
           {horariosDelDia.length === 0 ? (
@@ -183,8 +209,8 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
                     ${!h.disponible ? "blocked" : ""}
                   `}
                   onClick={() => {
-                    if (mode === "admin") {
-                      toggleHorarioAdmin(h);
+                    if (mode === "admin" || mode === "barbero") {
+                      toggleHorario(h);
                     } else if (h.disponible) {
                       setHorarioActivo(h);
                     }
@@ -198,7 +224,7 @@ export default function Calendar({ onConfirm, mode = "user" }: Props) {
         </>
       )}
 
-      {/* CONFIRMAR (solo user) */}
+      {/* Confirmar (solo user) */}
       {mode === "user" && horarioActivo && (
         <button
           className="confirm"
