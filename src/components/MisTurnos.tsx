@@ -71,7 +71,7 @@ export default function MisTurnos({ onClose }: { onClose: () => void }) {
     <div className="modal-form-overlay">
       <div className="modal-form-content admin-card">
         <h2 className="modal-title">Mis turnos</h2>
-
+        {mensaje && <p className="modal-message error">{mensaje}</p>}
         {turnos.length === 0 && (
           <p className="modal-message">No tenés turnos reservados</p>
         )}

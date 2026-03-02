@@ -29,12 +29,6 @@ interface PanelData {
   dinero_mensual: number;
 }
 
-interface Servicio {
-  id: number;
-  nombre: string;
-  precio: number;
-}
-
 interface Props {
   userId: number;
 }
@@ -43,7 +37,7 @@ export default function BarberoPanel({}: Props) {
   const [data, setData] = useState<PanelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [turnoEditando, setTurnoEditando] = useState<Turno | null>(null);
-  const [servicios, setServicios] = useState<Servicio[]>([]);
+
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const hoyLocal = () => {
@@ -71,15 +65,8 @@ export default function BarberoPanel({}: Props) {
     }
   };
 
-  const fetchServicios = async () => {
-    const res = await apiFetch("/admin/servicios");
-    const json = await res.json();
-    setServicios(json);
-  };
-
   useEffect(() => {
     fetchPanel();
-    fetchServicios();
   }, []);
 
   const cancelarTurno = async (id: number) => {
