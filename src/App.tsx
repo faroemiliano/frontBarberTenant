@@ -15,6 +15,7 @@ const AdminPanel = lazy(() => import("./components/admin/AdminPanel"));
 const AdminTurnos = lazy(() => import("./components/admin/AdminTurnos"));
 const AdminGanancias = lazy(() => import("./components/admin/AdminGanancias"));
 const AdminServicios = lazy(() => import("./components/admin/AdminServicios"));
+const BarberoPanel = lazy(() => import("./components/barbero/BarberoPanel"));
 
 import "./styles.css";
 
@@ -60,12 +61,14 @@ export default function App() {
 
       <Suspense fallback={<Loader />}>
         <Routes>
-          {/* PUBLIC */}
+          {/* HOME */}
           <Route
             path="/"
             element={
-              user?.is_admin ? (
-                <AdminPanel />
+              user?.rol === "admin" ? (
+                <Navigate to="/admin" />
+              ) : user?.rol === "barbero" ? (
+                <Navigate to="/barbero" />
               ) : (
                 <>
                   <Hero user={user} onLogin={() => setShowLogin(true)} />
@@ -80,13 +83,27 @@ export default function App() {
           {/* ADMIN */}
           <Route
             path="/admin"
-            element={user?.is_admin ? <AdminPanel /> : <Navigate to="/" />}
+            element={
+              user?.rol === "admin" ? <AdminPanel /> : <Navigate to="/" />
+            }
           >
             <Route index element={<Navigate to="turnos" />} />
             <Route path="turnos" element={<AdminTurnos />} />
             <Route path="ganancias" element={<AdminGanancias />} />
             <Route path="servicios" element={<AdminServicios />} />
           </Route>
+
+          {/* BARBERO */}
+          <Route
+            path="/barbero"
+            element={
+              user?.rol === "barbero" ? (
+                <BarberoPanel userId={user!.id} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
         </Routes>
       </Suspense>
 

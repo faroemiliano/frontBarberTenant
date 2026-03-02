@@ -15,6 +15,11 @@ interface Servicio {
   precio: number;
 }
 
+interface Profesional {
+  id: number;
+  nombre: string;
+}
+
 function parseLocalDate(dateStr: string) {
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d);
@@ -30,6 +35,8 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
 
   const [horario, setHorario] = useState<HorarioSeleccionado | null>(null);
   const [horarioConfirmado, setHorarioConfirmado] = useState(false);
+  const [profesionales, setProfesionales] = useState<Profesional[]>([]);
+  const [profesionalId, setProfesionalId] = useState<number | null>(null);
 
   /* CARGAR SERVICIOS DESDE BACKEND */
   useEffect(() => {
@@ -37,6 +44,13 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
       .then((res) => res.json())
       .then((data) => setServicios(data))
       .catch(() => setMensaje("No se pudieron cargar los servicios"));
+  }, []);
+
+  useEffect(() => {
+    apiFetch("/profesionales")
+      .then((res) => res.json())
+      .then((data) => setProfesionales(data))
+      .catch(() => setMensaje("No se pudieron cargar los profesionales"));
   }, []);
 
   async function reservar() {
@@ -47,6 +61,7 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
     if (!servicio) return setMensaje("Seleccioná un servicio");
     if (!telefono.trim()) return setMensaje("Ingresá tu teléfono");
     if (!horario) return setMensaje("Seleccioná fecha y horario");
+    if (!profesionalId) return setMensaje("Seleccioná un profesional");
 
     setLoading(true);
 
@@ -88,6 +103,23 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
     <>
       <h2>Reservar turno</h2>
 
+      <select
+        value={profesionalId ?? ""}
+        onChange={(e) => {
+          const value = e.target.value;
+          setProfesionalId(value === "" ? null : Number(value));
+          setHorario(null);
+          setHorarioConfirmado(false);
+        }}
+      >
+        <option value="">Seleccionar profesional</option>
+        {profesionales.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.nombre}
+          </option>
+        ))}
+      </select>
+
       <div className="services-grid">
         {servicios.map((s) => (
           <button
@@ -106,8 +138,10 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
         onChange={(e) => setTelefono(e.target.value)}
       />
 
-      {!horarioConfirmado && (
+      {profesionalId !== null && !horarioConfirmado && (
         <Calendar
+          barberoId={profesionalId}
+          mode="user"
           onConfirm={(h) => {
             setHorario(h);
             setHorarioConfirmado(true);

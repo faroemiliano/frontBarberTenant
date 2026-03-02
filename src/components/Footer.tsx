@@ -4,28 +4,20 @@ export default function Footer() {
       <div className="footer-container">
         <div className="footer-col">
           <h4>Dirección</h4>
-          <p>Av. Siempre Viva 742</p>
+          <p>Hipolito Irigoyen 1138, V. insuperable</p>
           <p>Buenos Aires, Argentina</p>
         </div>
 
         <div className="footer-col">
-          <h4>Contacto</h4>
-          <p>📞 Tel: 11 1234-5678</p>
-          <p>
-            💬 WhatsApp:{" "}
-            <a
-              href="https://wa.me/5491112345678"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Enviar mensaje
-            </a>
-          </p>
-        </div>
-        <div className="footer-col">
           <h4>Horarios</h4>
-          <p>Lunes a Sábado</p>
-          <p>10:00 – 20:00</p>
+
+          <p>
+            <strong>Martes a Jueves:</strong> 11:00 – 14:00 | 15:00 – 20:00
+          </p>
+
+          <p>
+            <strong>Viernes y Sábado:</strong> 10:00 – 14:00 | 15:00 – 20:00
+          </p>
         </div>
       </div>
 

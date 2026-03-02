@@ -13,7 +13,13 @@ interface Turno {
   hora: string;
   servicio: string;
   precio: number;
-  horario_id: number; // ✅ agregamos para comparar correctamente
+  horario_id: number;
+  barbero: string;
+}
+
+interface Barbero {
+  id: number;
+  nombre: string;
 }
 
 /* =========================
@@ -55,6 +61,9 @@ export default function AdminPanel() {
 
   const [diaActivo, setDiaActivo] = useState(fechaLocalISO());
 
+  const [barberos, setBarberos] = useState<Barbero[]>([]);
+  const [barberoActivo, setBarberoActivo] = useState<number | null>(null);
+
   const turnosDelDia = useMemo(() => {
     return turnos.filter((t) => t.fecha === diaActivo);
   }, [turnos, diaActivo]);
@@ -74,7 +83,6 @@ export default function AdminPanel() {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
     notifyGananciasUpdate();
-    // eliminar localmente para que se vea de inmediato
     setTurnos((prev) => prev.filter((t) => t.id !== id));
     setTurnoAEliminar(null);
   };
@@ -85,6 +93,16 @@ export default function AdminPanel() {
     apiFetch("/admin/servicios")
       .then((res) => res.json())
       .then(setServicios);
+
+    // Traer barberos
+    apiFetch("/profesionales", {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then((res) => res.json())
+      .then((data: Barbero[]) => {
+        setBarberos(data);
+        if (data.length > 0) setBarberoActivo(data[0].id);
+      });
   }, []);
 
   if (loading) return <p>Cargando turnos...</p>;
@@ -126,6 +144,7 @@ export default function AdminPanel() {
                 <th>Fecha</th>
                 <th>Hora</th>
                 <th>Servicio</th>
+                <th>Barbero</th>
                 <th>Precio</th>
                 <th>Acciones</th>
               </tr>
@@ -139,6 +158,7 @@ export default function AdminPanel() {
                   <td>{isoToDMY(t.fecha)}</td>
                   <td>{t.hora}</td>
                   <td>{t.servicio}</td>
+                  <td className="barbero-cell">{t.barbero}</td>
                   <td>${t.precio.toFixed(2)}</td>
                   <td className="admin-actions">
                     <button
@@ -168,7 +188,9 @@ export default function AdminPanel() {
           modo="editar"
           turnoInicial={{
             telefono: turnoEditando.telefono,
-            servicio: turnoEditando.servicio,
+            servicio_id:
+              servicios.find((s) => s.nombre === turnoEditando.servicio)?.id ??
+              0,
             precio: turnoEditando.precio,
             horario: {
               id: turnoEditando.horario_id,
@@ -177,18 +199,11 @@ export default function AdminPanel() {
             },
           }}
           onClose={() => setTurnoEditando(null)}
-          onSubmit={async ({ telefono, servicio, horario, precio }) => {
+          onSubmit={async ({ telefono, servicio_id, horario, precio }) => {
             if (!turnoEditando) return;
 
             const turnoId = turnoEditando.id;
             const precioNumber = Number(precio);
-
-            console.log("🔥 ON SUBMIT", {
-              telefono,
-              servicio,
-              horario,
-              precio: precioNumber,
-            });
 
             const payload: Record<string, any> = {
               telefono,
@@ -199,10 +214,7 @@ export default function AdminPanel() {
               payload.horario_id = horario.id;
             }
 
-            const servicioReal = servicios.find((s) => s.nombre === servicio);
-            if (servicioReal) {
-              payload.servicio_id = servicioReal.id;
-            }
+            payload.servicio_id = servicio_id;
 
             const res = await apiFetch(`/admin/turnos/${turnoId}`, {
               method: "PATCH",
@@ -224,7 +236,9 @@ export default function AdminPanel() {
                   ? {
                       ...t,
                       telefono,
-                      servicio,
+                      servicio:
+                        servicios.find((s) => s.id === servicio_id)?.nombre ??
+                        turnoEditando.servicio,
                       precio: precioNumber,
                       fecha: horario.fecha,
                       hora: horario.hora,
@@ -276,11 +290,26 @@ export default function AdminPanel() {
       )}
 
       {/* MODAL CALENDARIO */}
-      {calendarOpen && (
+      {calendarOpen && barberoActivo && (
         <div className="modal-overlay">
           <div className="modal-box large">
             <h2>Bloquear / Desbloquear horarios</h2>
-            <Calendar mode="admin" />
+
+            {/* Selector de barbero */}
+            <select
+              value={barberoActivo}
+              onChange={(e) => setBarberoActivo(Number(e.target.value))}
+            >
+              {barberos.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nombre}
+                </option>
+              ))}
+            </select>
+
+            {/* Calendar recibe barberoId */}
+            <Calendar mode="admin" barberoId={barberoActivo} />
+
             <div className="modal-actions">
               <button
                 className="btn-secondary"

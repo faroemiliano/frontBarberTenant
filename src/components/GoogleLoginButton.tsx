@@ -20,9 +20,15 @@ export default function GoogleLoginButton({
         });
 
         const data = await r.json();
+        console.log("Respuesta backend Google:", data);
         if (!r.ok) return;
 
-        saveSession(data.access_token, data.user);
+        saveSession(data.access_token, {
+          id: data.user.id,
+          email: data.user.email,
+          nombre: data.user.nombre,
+          rol: data.user.rol, // 🔥 conversión correcta
+        });
         onSuccess();
       }}
       onError={() => {
