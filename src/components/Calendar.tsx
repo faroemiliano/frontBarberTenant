@@ -122,6 +122,7 @@ export default function Calendar({
         if (!res.ok) throw new Error("Error cargando horarios");
 
         const data: Horario[] = await res.json();
+        console.log("HORARIOS RECIBIDOS:", data);
         if (!Array.isArray(data)) throw new Error("Datos inválidos");
 
         setHorarios(data);
