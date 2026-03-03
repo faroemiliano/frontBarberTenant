@@ -16,7 +16,7 @@ interface Barbero {
 interface Props {
   onConfirm?: (horario: { id: number; fecha: string; hora: string }) => void;
   mode?: "user" | "admin" | "barbero";
-  barberoId?: number; // se usa solo admin/barbero
+  barberoId?: number; // solo admin/barbero
 }
 
 function parseLocalDate(dateStr: string) {
@@ -50,7 +50,6 @@ export default function Calendar({
 
   const DIAS_POR_PAGINA = 5;
 
-  // 🔹 Toggle horario (solo admin o barbero)
   async function toggleHorario(h: Horario) {
     try {
       const token = localStorage.getItem("token");
@@ -66,7 +65,6 @@ export default function Calendar({
       if (!res.ok) throw new Error("Error al cambiar horario");
 
       const data: { disponible: boolean } = await res.json();
-
       setHorarios((prev) =>
         prev.map((x) =>
           x.id === h.id ? { ...x, disponible: data.disponible } : x,
@@ -77,7 +75,7 @@ export default function Calendar({
     }
   }
 
-  // 🔹 Cargar lista de barberos si es modo "user"
+  // 🔹 Cargar lista de barberos si es usuario
   useEffect(() => {
     if (mode !== "user") return;
 
@@ -97,7 +95,7 @@ export default function Calendar({
     cargarBarberos();
   }, [mode]);
 
-  // 🔹 Cargar horarios cuando cambia barbero o en admin/barbero
+  // 🔹 Cargar horarios cuando cambia barbero/admin/barbero
   useEffect(() => {
     async function cargarHorarios() {
       if (
@@ -116,13 +114,9 @@ export default function Calendar({
         }
 
         let path = "";
-        if (mode === "admin") {
-          path = `/admin/calendario-admin/${barberoId}`;
-        } else if (mode === "barbero") {
-          path = "/barbero/horarios";
-        } else {
-          path = `/calendario/${barberoSeleccionado}`;
-        }
+        if (mode === "admin") path = `/admin/calendario-admin/${barberoId}`;
+        else if (mode === "barbero") path = "/barbero/horarios";
+        else path = `/calendario/${barberoSeleccionado}`;
 
         const res = await apiFetch(path, { headers });
         if (!res.ok) throw new Error("Error cargando horarios");
@@ -144,7 +138,7 @@ export default function Calendar({
           indexHoy !== -1 ? uniqueDays[indexHoy] : (uniqueDays[0] ?? null),
         );
       } catch (err) {
-        console.error("Error cargando horarios:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -156,15 +150,27 @@ export default function Calendar({
   const inicio = page * DIAS_POR_PAGINA;
   const fin = inicio + DIAS_POR_PAGINA;
   const diasVisibles = dias.slice(inicio, fin);
-
   const horariosDelDia = horarios.filter((h) => h.fecha === diaActivo);
   const hayDisponibles = horarios.some((h) => h.disponible);
 
   if (loading) return <p>Cargando horarios...</p>;
 
+  if (!loading && !hayDisponibles && mode === "user") {
+    return (
+      <div className="no-slots">
+        <h4>😕 Sin turnos disponibles</h4>
+        <p>
+          Todos los horarios de estos días ya están ocupados.
+          <br />
+          Probá nuevamente más adelante.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* 🔹 Selector de barbero para usuario */}
+      {/* Selector barbero solo user */}
       {mode === "user" && (
         <select
           value={barberoSeleccionado ?? ""}
@@ -239,16 +245,11 @@ export default function Calendar({
               {horariosDelDia.map((h) => (
                 <button
                   key={h.id}
-                  className={`hour-card
-                    ${horarioActivo?.id === h.id ? "active" : ""}
-                    ${!h.disponible ? "blocked" : ""}
-                  `}
+                  className={`hour-card ${horarioActivo?.id === h.id ? "active" : ""} ${!h.disponible ? "blocked" : ""}`}
                   onClick={() => {
-                    if (mode === "admin" || mode === "barbero") {
+                    if (mode === "admin" || mode === "barbero")
                       toggleHorario(h);
-                    } else if (h.disponible) {
-                      setHorarioActivo(h);
-                    }
+                    else if (h.disponible) setHorarioActivo(h);
                   }}
                 >
                   {h.hora.slice(0, 5)}
@@ -259,7 +260,7 @@ export default function Calendar({
         </>
       )}
 
-      {/* Confirmar (solo user) */}
+      {/* Confirmar solo user */}
       {mode === "user" && horarioActivo && (
         <button
           className="confirm"
