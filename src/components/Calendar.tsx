@@ -8,15 +8,10 @@ interface Horario {
   disponible: boolean;
 }
 
-interface Barbero {
-  id: number;
-  nombre: string;
-}
-
 interface Props {
   onConfirm?: (horario: { id: number; fecha: string; hora: string }) => void;
   mode?: "user" | "admin" | "barbero";
-  barberoId?: number; // solo admin/barbero
+  barberoId?: number;
 }
 
 function parseLocalDate(dateStr: string) {
@@ -37,10 +32,6 @@ export default function Calendar({
   mode = "user",
   barberoId,
 }: Props) {
-  const [barberos, setBarberos] = useState<Barbero[]>([]);
-  const [barberoSeleccionado, setBarberoSeleccionado] = useState<number | null>(
-    barberoId ?? null,
-  );
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [dias, setDias] = useState<string[]>([]);
   const [diaActivo, setDiaActivo] = useState<string | null>(null);
@@ -59,12 +50,16 @@ export default function Calendar({
         mode === "admin"
           ? `/admin/horarios/${h.id}/toggle`
           : `/barbero/horarios/${h.id}/toggle`,
-        { method: "PATCH", headers: { Authorization: `Bearer ${token}` } },
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        },
       );
 
       if (!res.ok) throw new Error("Error al cambiar horario");
 
       const data: { disponible: boolean } = await res.json();
+
       setHorarios((prev) =>
         prev.map((x) =>
           x.id === h.id ? { ...x, disponible: data.disponible } : x,
@@ -75,36 +70,12 @@ export default function Calendar({
     }
   }
 
-  // 🔹 Cargar lista de barberos si es usuario
-  useEffect(() => {
-    if (mode !== "user") return;
-
-    async function cargarBarberos() {
-      try {
-        const res = await apiFetch("/profesionales");
-        if (!res.ok) throw new Error("Error cargando barberos");
-        const data: Barbero[] = await res.json();
-        setBarberos(data);
-        if (!barberoSeleccionado && data.length > 0)
-          setBarberoSeleccionado(data[0].id);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    cargarBarberos();
-  }, [mode]);
-
-  // 🔹 Cargar horarios cuando cambia barbero/admin/barbero
   useEffect(() => {
     async function cargarHorarios() {
-      if (
-        (mode === "user" && !barberoSeleccionado) ||
-        (mode !== "user" && !barberoId)
-      )
-        return;
+      if (mode !== "barbero" && !barberoId) return;
 
       setLoading(true);
+
       try {
         let token = localStorage.getItem("token");
         let headers: Record<string, string> | undefined;
@@ -114,27 +85,32 @@ export default function Calendar({
         }
 
         let path = "";
-        if (mode === "admin") path = `/admin/calendario-admin/${barberoId}`;
-        else if (mode === "barbero") path = "/barbero/horarios";
-        else path = `/calendario/${barberoSeleccionado}`;
+
+        if (mode === "admin") {
+          path = `/admin/calendario-admin/${barberoId}`;
+        } else if (mode === "barbero") {
+          path = "/barbero/horarios";
+        } else {
+          path = `/calendario/${barberoId}`;
+        }
 
         const res = await apiFetch(path, { headers });
         if (!res.ok) throw new Error("Error cargando horarios");
 
         const data: Horario[] = await res.json();
-        console.log("HORARIOS RECIBIDOS:", data);
         if (!Array.isArray(data)) throw new Error("Datos inválidos");
 
         setHorarios(data);
 
-        // 🔹 Días únicos y ordenados
         const uniqueDays = Array.from(new Set(data.map((h) => h.fecha))).sort();
+
         setDias(uniqueDays);
 
-        // 🔹 Posicionar en hoy si existe
         const hoy = todayISO();
         const indexHoy = uniqueDays.findIndex((d) => d >= hoy);
+
         setPage(indexHoy !== -1 ? Math.floor(indexHoy / DIAS_POR_PAGINA) : 0);
+
         setDiaActivo(
           indexHoy !== -1 ? uniqueDays[indexHoy] : (uniqueDays[0] ?? null),
         );
@@ -146,7 +122,7 @@ export default function Calendar({
     }
 
     cargarHorarios();
-  }, [mode, barberoId, barberoSeleccionado]);
+  }, [mode, barberoId]);
 
   const inicio = page * DIAS_POR_PAGINA;
   const fin = inicio + DIAS_POR_PAGINA;
@@ -171,21 +147,6 @@ export default function Calendar({
 
   return (
     <>
-      {/* Selector barbero solo user */}
-      {mode === "user" && (
-        <select
-          value={barberoSeleccionado ?? ""}
-          onChange={(e) => setBarberoSeleccionado(Number(e.target.value))}
-        >
-          {barberos.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.nombre}
-            </option>
-          ))}
-        </select>
-      )}
-
-      {/* Navegación */}
       <div className="week-nav">
         <button
           disabled={page === 0}
@@ -197,6 +158,7 @@ export default function Calendar({
         >
           ⬅️
         </button>
+
         <button
           disabled={fin >= dias.length}
           onClick={() => {
@@ -209,10 +171,10 @@ export default function Calendar({
         </button>
       </div>
 
-      {/* Días */}
       <div className="days-grid">
         {diasVisibles.map((d) => {
           const date = parseLocalDate(d);
+
           return (
             <button
               key={d}
@@ -234,7 +196,6 @@ export default function Calendar({
         })}
       </div>
 
-      {/* Horarios */}
       {diaActivo && (
         <>
           {horariosDelDia.length === 0 ? (
@@ -246,11 +207,15 @@ export default function Calendar({
               {horariosDelDia.map((h) => (
                 <button
                   key={h.id}
-                  className={`hour-card ${horarioActivo?.id === h.id ? "active" : ""} ${!h.disponible ? "blocked" : ""}`}
+                  className={`hour-card ${
+                    horarioActivo?.id === h.id ? "active" : ""
+                  } ${!h.disponible ? "blocked" : ""}`}
                   onClick={() => {
-                    if (mode === "admin" || mode === "barbero")
+                    if (mode === "admin" || mode === "barbero") {
                       toggleHorario(h);
-                    else if (h.disponible) setHorarioActivo(h);
+                    } else if (h.disponible) {
+                      setHorarioActivo(h);
+                    }
                   }}
                 >
                   {h.hora.slice(0, 5)}
@@ -261,7 +226,6 @@ export default function Calendar({
         </>
       )}
 
-      {/* Confirmar solo user */}
       {mode === "user" && horarioActivo && (
         <button
           className="confirm"
