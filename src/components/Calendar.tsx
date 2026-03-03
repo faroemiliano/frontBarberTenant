@@ -8,10 +8,15 @@ interface Horario {
   disponible: boolean;
 }
 
+interface Barbero {
+  id: number;
+  nombre: string;
+}
+
 interface Props {
   onConfirm?: (horario: { id: number; fecha: string; hora: string }) => void;
   mode?: "user" | "admin" | "barbero";
-  barberoId?: number;
+  barberoId?: number; // se usa solo admin/barbero
 }
 
 function parseLocalDate(dateStr: string) {
@@ -32,6 +37,10 @@ export default function Calendar({
   mode = "user",
   barberoId,
 }: Props) {
+  const [barberos, setBarberos] = useState<Barbero[]>([]);
+  const [barberoSeleccionado, setBarberoSeleccionado] = useState<number | null>(
+    barberoId ?? null,
+  );
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [dias, setDias] = useState<string[]>([]);
   const [diaActivo, setDiaActivo] = useState<string | null>(null);
@@ -68,8 +77,35 @@ export default function Calendar({
     }
   }
 
+  // 🔹 Cargar lista de barberos si es modo "user"
+  useEffect(() => {
+    if (mode !== "user") return;
+
+    async function cargarBarberos() {
+      try {
+        const res = await apiFetch("/profesionales");
+        if (!res.ok) throw new Error("Error cargando barberos");
+        const data: Barbero[] = await res.json();
+        setBarberos(data);
+        if (!barberoSeleccionado && data.length > 0)
+          setBarberoSeleccionado(data[0].id);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    cargarBarberos();
+  }, [mode]);
+
+  // 🔹 Cargar horarios cuando cambia barbero o en admin/barbero
   useEffect(() => {
     async function cargarHorarios() {
+      if (
+        (mode === "user" && !barberoSeleccionado) ||
+        (mode !== "user" && !barberoId)
+      )
+        return;
+
       setLoading(true);
       try {
         let token = localStorage.getItem("token");
@@ -81,13 +117,11 @@ export default function Calendar({
 
         let path = "";
         if (mode === "admin") {
-          if (!barberoId) return; // admin siempre selecciona barbero
           path = `/admin/calendario-admin/${barberoId}`;
         } else if (mode === "barbero") {
           path = "/barbero/horarios";
         } else {
-          if (!barberoId) return;
-          path = `/calendario/${barberoId}`;
+          path = `/calendario/${barberoSeleccionado}`;
         }
 
         const res = await apiFetch(path, { headers });
@@ -117,7 +151,7 @@ export default function Calendar({
     }
 
     cargarHorarios();
-  }, [mode, barberoId]);
+  }, [mode, barberoId, barberoSeleccionado]);
 
   const inicio = page * DIAS_POR_PAGINA;
   const fin = inicio + DIAS_POR_PAGINA;
@@ -128,21 +162,22 @@ export default function Calendar({
 
   if (loading) return <p>Cargando horarios...</p>;
 
-  if (!loading && !hayDisponibles && mode === "user") {
-    return (
-      <div className="no-slots">
-        <h4>😕 Sin turnos disponibles</h4>
-        <p>
-          Todos los horarios de estos días ya están ocupados.
-          <br />
-          Probá nuevamente más adelante.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
+      {/* 🔹 Selector de barbero para usuario */}
+      {mode === "user" && (
+        <select
+          value={barberoSeleccionado ?? ""}
+          onChange={(e) => setBarberoSeleccionado(Number(e.target.value))}
+        >
+          {barberos.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.nombre}
+            </option>
+          ))}
+        </select>
+      )}
+
       {/* Navegación */}
       <div className="week-nav">
         <button
