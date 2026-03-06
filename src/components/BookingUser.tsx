@@ -102,23 +102,24 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
   return (
     <>
       <h2>Reservar turno</h2>
-
-      <select
-        value={profesionalId ?? ""}
-        onChange={(e) => {
-          const value = e.target.value;
-          setProfesionalId(value === "" ? null : Number(value));
-          setHorario(null);
-          setHorarioConfirmado(false);
-        }}
-      >
-        <option value="">Seleccionar profesional</option>
-        {profesionales.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.nombre}
-          </option>
-        ))}
-      </select>
+      <div className="select-wrapper">
+        <select
+          value={profesionalId ?? ""}
+          onChange={(e) => {
+            const value = e.target.value;
+            setProfesionalId(value === "" ? null : Number(value));
+            setHorario(null);
+            setHorarioConfirmado(false);
+          }}
+        >
+          <option value="">Seleccionar profesional</option>
+          {profesionales.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="services-grid">
         {servicios.map((s) => (

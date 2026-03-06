@@ -94,35 +94,49 @@ function ModalDetalle({
       });
   }, [fecha]);
 
+  /* TOTAL DEL DIA */
+  const total = data.reduce((acc, t) => acc + t.precio, 0);
+
   return (
     <div className="modal-overlay">
       <div className="modal-box large">
-        <h3>Detalle — {isoToDMY(fecha)}</h3>
+        <div className="modal-detalle">
+          <h3 className="modal-detalle-titulo">Detalle — {isoToDMY(fecha)}</h3>
 
-        {loading ? (
-          <p>Cargando...</p>
-        ) : (
-          <div className="admin-servicios-scroll">
-            <table className="admin-table-servicios">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Servicio</th>
-                  <th>Precio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((t, i) => (
-                  <tr key={i}>
-                    <td>{t.nombre}</td>
-                    <td>{t.servicio}</td>
-                    <td>${t.precio}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          {loading ? (
+            <p className="modal-detalle-loading">Cargando...</p>
+          ) : (
+            <>
+              <div className="modal-detalle-tabla-scroll">
+                <table className="modal-detalle-tabla">
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Servicio</th>
+                      <th className="precio">Precio</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {data.map((t, i) => (
+                      <tr key={i}>
+                        <td>{t.nombre}</td>
+                        <td>{t.servicio}</td>
+                        <td className="precio">
+                          ${t.precio.toLocaleString("es-AR")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="modal-detalle-total">
+                Total: ${total.toLocaleString("es-AR")}
+              </div>
+            </>
+          )}
+        </div>
 
         <div className="modal-actions">
           <button className="btn-secondary" onClick={onClose}>
@@ -149,7 +163,6 @@ function GraficoPie({
 }) {
   const [data, setData] = useState<GananciaServicio[]>([]);
   const [total, setTotal] = useState(0);
-
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [modalMesOpen, setModalMesOpen] = useState(false);
 
@@ -179,12 +192,11 @@ function GraficoPie({
     ]);
 
     const graficoJson: GananciaServicio[] = await graficoRes.json();
-    const totalJson: { total: number } = await totalRes.json();
+    const totalJson = await totalRes.json();
 
     setData(graficoJson);
-    setTotal(totalJson.total);
+    setTotal(totalJson.total || 0);
   };
-
   /* ===== useEffect que depende directamente de fecha y tipo ===== */
   useEffect(() => {
     cargarDatos();
@@ -234,10 +246,6 @@ function GraficoPie({
         </div>
       )}
 
-      <div className="grafico-total">
-        Total: ${total.toLocaleString("es-AR")}
-      </div>
-
       <div className="grafico-container">
         <ResponsiveContainer>
           <PieChart>
@@ -248,9 +256,6 @@ function GraficoPie({
               cx="50%"
               cy="50%"
               outerRadius={100}
-              label={(e: any) =>
-                `${e.servicio}: $${e.total.toLocaleString("es-AR")}`
-              }
               onClick={() => {
                 if (tipo === "dia") setModalDetalleOpen(true);
                 if (tipo === "mes") setModalMesOpen(true);

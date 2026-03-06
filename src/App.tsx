@@ -58,7 +58,7 @@ export default function App() {
         onLogin={() => setShowLogin(true)}
         onLogout={handleLogout}
       />
-
+      <div className="hero-divider" />
       <Suspense fallback={<Loader />}>
         <Routes>
           {/* HOME */}
@@ -74,6 +74,7 @@ export default function App() {
                   <Hero user={user} onLogin={() => setShowLogin(true)} />
                   <div className="hero-divider" />
                   <CutsGallery />
+                  <div className="hero-divider" />
                   <Footer />
                 </>
               )

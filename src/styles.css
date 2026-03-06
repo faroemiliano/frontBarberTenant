@@ -30,37 +30,26 @@ section {
    NAVBAR
 ===================== */
 .navbar {
-  height: 10vh;
-  min-height: 56px;
+  background-color: #000;
+  height: 105px; /* altura fija */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  background: #000;
+  overflow: hidden; /* evita que el logo empuje */
+  padding: 0px 20px;
+}
+
+.navbar-logo {
+  height: 150px;
+  width: auto;
+  object-fit: contain;
 }
 
 /* WRAPPER DEL LOGO */
 .navbar-logo-wrapper {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* ⬅️ CLAVE */
   height: 100%;
-  flex-shrink: 0; /* ⬅️ no se achica */
-}
-
-/* LOGO */
-.navbar-logo {
-  height: 100%;
-  max-height: 100%;
-  width: auto;
-
-  object-fit: contain;
-  margin-top: 38px;
-  transform: scale(2);
-  transform-origin: left center; /* ⬅️ crece hacia la derecha */
-
-  pointer-events: none;
-  user-select: none;
 }
 
 /* BOTONES */
@@ -74,12 +63,15 @@ section {
 /* MOBILE */
 @media (max-width: 768px) {
   .navbar {
-    height: 76px;
+    height: 96px;
   }
 
   .navbar-logo {
-    transform: scale(3);
-    margin-top: 20px;
+    height: 140px; /* 76 × 0.83 ≈ 63 */
+    width: auto;
+    object-fit: contain;
+    margin-top: 0;
+    transform: none;
   }
 }
 
@@ -323,7 +315,7 @@ section {
    FOOTER
 ===================== */
 .footer {
-  background: #5d5e62;
+  background: #1f2933; /* gris oscuro elegante */
   padding: 48px 20px 24px;
   color: #e5e7eb;
 }
@@ -337,31 +329,43 @@ section {
   text-align: center;
 }
 
+/* TITULOS */
+
 .footer-col h4 {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   color: #22c55e;
+  font-size: 16px;
+  font-weight: 600;
 }
+
+/* TEXTO */
 
 .footer-col p {
   margin: 6px 0;
   font-size: 15px;
-  color: #cbd5f5;
+  color: #cbd5e1;
 }
+
+/* LINKS */
 
 .footer-col a {
   color: #22c55e;
   text-decoration: none;
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .footer-col a:hover {
+  color: #16a34a;
   text-decoration: underline;
 }
+
+/* LINEA INFERIOR */
 
 .footer-bottom {
   margin-top: 32px;
   padding-top: 16px;
-  border-top: 1px solid #1e293b;
+  border-top: 1px solid #334155;
   font-size: 14px;
   color: #94a3b8;
   text-align: center;
@@ -1726,4 +1730,157 @@ section {
   padding: 30px;
   border-radius: 12px;
   width: 300px;
+}
+
+/* ESTILOS DEL MENU PARA ELEGIR BARBERO */
+
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  text-align: center;
+  text-align-last: center;
+
+  width: 100%;
+  padding: 12px 40px 12px 14px;
+
+  background-color: #0f172a;
+  color: #f1f5f9;
+
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+
+  font-size: 18px;
+  font-weight: 500;
+
+  outline: none;
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+}
+
+.select-wrapper select:hover {
+  border-color: #334155;
+}
+
+.select-wrapper select:focus {
+  border-color: #09f529;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* Flecha personalizada */
+.select-wrapper::after {
+  content: "▾";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Opciones */
+.select-wrapper select option {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+.modal-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* titulo */
+
+.modal-detalle-titulo {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: #07b432;
+}
+
+/* loading */
+
+.modal-detalle-loading {
+  text-align: center;
+  padding: 25px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* contenedor tabla */
+
+.modal-detalle-tabla-scroll {
+  max-height: 340px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #000000;
+  background: #353937;
+}
+
+/* tabla */
+
+.modal-detalle-tabla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+/* header */
+
+.modal-detalle-tabla thead {
+  background: #e8f5ee; /* verde muy suave */
+}
+
+.modal-detalle-tabla th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #2f5d4a;
+  border-bottom: 1px solid #d8e6de;
+}
+
+/* celdas */
+
+.modal-detalle-tabla td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #edf2ef;
+}
+
+/* filas alternadas */
+
+.modal-detalle-tabla tbody tr:nth-child(even) {
+  background: #92ad9f;
+}
+
+/* hover */
+
+.modal-detalle-tabla tbody tr:hover {
+  background: #eef7f2;
+}
+
+/* precio alineado */
+
+.modal-detalle-tabla .precio {
+  text-align: right;
+  font-weight: 600;
+  color: #f6f9f8;
+}
+
+/* total */
+
+.modal-detalle-total {
+  border-top: 2px solid #dceee6;
+  padding-top: 14px;
+  text-align: right;
+  font-size: 18px;
+  font-weight: 700;
+  color: #dae7e3;
 }
