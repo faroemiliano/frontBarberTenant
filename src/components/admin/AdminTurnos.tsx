@@ -109,8 +109,6 @@ export default function AdminPanel() {
 
   return (
     <section className="admin-panel">
-      <h1 className="admin-title">Panel del administrador</h1>
-
       <div className="admin-card">
         {/* Navegación de días */}
         <div className="admin-day-nav">
@@ -153,20 +151,21 @@ export default function AdminPanel() {
             <tbody>
               {turnosDelDia.map((t) => (
                 <tr key={t.id}>
-                  <td>{t.nombre}</td>
-                  <td>{t.telefono}</td>
-                  <td>{isoToDMY(t.fecha)}</td>
-                  <td>{t.hora}</td>
-                  <td>{t.servicio}</td>
-                  <td className="barbero-cell">{t.barbero}</td>
-                  <td>${t.precio.toFixed(2)}</td>
-                  <td className="admin-actions">
+                  <td data-label="Cliente">{t.nombre}</td>
+                  <td data-label="Teléfono">{t.telefono}</td>
+                  <td data-label="Fecha">{isoToDMY(t.fecha)}</td>
+                  <td data-label="Hora">{t.hora}</td>
+                  <td data-label="Servicio">{t.servicio}</td>
+                  <td data-label="Barbero">{t.barbero}</td>
+                  <td data-label="Precio">${t.precio.toFixed(2)}</td>
+                  <td data-label="Acciones" className="admin-actions">
                     <button
                       className="btn-secondary"
                       onClick={() => setTurnoEditando(t)}
                     >
                       Editar
                     </button>
+
                     <button
                       className="btn-secondary"
                       onClick={() => setTurnoAEliminar(t)}

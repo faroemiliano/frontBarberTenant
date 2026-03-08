@@ -33,11 +33,33 @@ interface Props {
   userId: number;
 }
 
+function isoToLocalDate(fechaISO: string) {
+  const [y, m, d] = fechaISO.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function moverDiaISO(fechaISO: string, delta: number) {
+  const date = isoToLocalDate(fechaISO);
+  date.setDate(date.getDate() + delta);
+
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+
+  return `${y}-${m}-${d}`;
+}
+
+function isoToDMY(fechaISO: string) {
+  const [y, m, d] = fechaISO.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 export default function BarberoPanel({}: Props) {
   const [data, setData] = useState<PanelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [turnoEditando, setTurnoEditando] = useState<Turno | null>(null);
   const [modalGraficoOpen, setModalGraficoOpen] = useState(false);
+  const [modalMesOpen, setModalMesOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const hoyLocal = () => {
@@ -80,8 +102,6 @@ export default function BarberoPanel({}: Props) {
   if (loading) return <div className="panel-loading">Cargando...</div>;
   if (!data) return <div>Error</div>;
 
-  const COLORS = ["#00c853", "#2962ff"];
-
   const turnosFiltrados = data.turnos.filter((t) => {
     const fechaTurno = t.fecha.split("T")[0];
     return fechaTurno === fechaSeleccionada;
@@ -106,11 +126,14 @@ export default function BarberoPanel({}: Props) {
 
   const esHoy = fechaSeleccionada === hoyLocal();
 
-  const graficoData = [
+  const graficoDia = [
     {
       name: esHoy ? "Hoy" : fechaSeleccionada,
       value: gananciaDelDia,
     },
+  ];
+
+  const graficoMes = [
     {
       name: "Mes",
       value: gananciaDelMesSeleccionado,
@@ -121,140 +144,126 @@ export default function BarberoPanel({}: Props) {
     <div className="panel-container">
       <div className="admin-card">
         <h1 className="admin-title">Panel del Barbero</h1>
-        <h2 className="turnos-title">Turnos</h2>
 
         <div className="admin-day-nav">
           <button
             className="btn-secondary"
-            onClick={() => {
-              const [year, month, day] = fechaSeleccionada
-                .split("-")
-                .map(Number);
-              const d = new Date(year, month - 1, day); // LOCAL
-              d.setDate(d.getDate() - 1);
-
-              setFechaSeleccionada(
-                `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-                  d.getDate(),
-                ).padStart(2, "0")}`,
-              );
-            }}
+            onClick={() =>
+              setFechaSeleccionada(moverDiaISO(fechaSeleccionada, -1))
+            }
           >
-            Dia anterior
+            Día anterior
           </button>
 
-          <input
-            type="date"
-            value={fechaSeleccionada}
-            onChange={(e) => setFechaSeleccionada(e.target.value)}
-          />
+          <span className="admin-day-label">{isoToDMY(fechaSeleccionada)}</span>
 
           <button
             className="btn-secondary"
-            onClick={() => {
-              const [year, month, day] = fechaSeleccionada
-                .split("-")
-                .map(Number);
-              const d = new Date(year, month - 1, day); // LOCAL
-              d.setDate(d.getDate() + 1);
-
-              setFechaSeleccionada(
-                `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-                  d.getDate(),
-                ).padStart(2, "0")}`,
-              );
-            }}
+            onClick={() =>
+              setFechaSeleccionada(moverDiaISO(fechaSeleccionada, 1))
+            }
           >
-            Dia siguiente
+            Día siguiente
           </button>
         </div>
-
-        <table className="turnos-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Teléfono</th>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Servicio</th>
-              <th>Precio</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {turnosFiltrados.map((turno) => (
-              <tr key={turno.id}>
-                <td>{turno.cliente}</td>
-                <td>{turno.telefono}</td>
-                <td>{turno.fecha}</td>
-                <td>{turno.hora}</td>
-                <td>{turno.servicio}</td>
-                <td>${turno.precio}</td>
-                <td>
-                  <button
-                    className="btn-secondary"
-                    onClick={() => setTurnoEditando(turno)}
-                  >
-                    Editar
-                  </button>
-
-                  <button
-                    className="btn-secondary"
-                    onClick={() => cancelarTurno(turno.id)}
-                  >
-                    Cancelar
-                  </button>
-                </td>
+        <div className="admin-turnos-scroll">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Teléfono</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Servicio</th>
+                <th>Precio</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {turnosFiltrados.map((turno) => (
+                <tr key={turno.id}>
+                  <td data-label="Cliente">{turno.cliente}</td>
+                  <td data-label="Telefono">{turno.telefono}</td>
+                  <td data-label="Fecha">{turno.fecha}</td>
+                  <td data-label="Hora">{turno.hora}</td>
+                  <td data-label="Servicio">{turno.servicio}</td>
+                  <td data-label="Precio">${turno.precio}</td>
+                  <td>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setTurnoEditando(turno)}
+                    >
+                      Editar
+                    </button>
 
-        <div className="admin-card compact">
-          <div className="admin-header">
-            <button
-              className="btn-secondary"
-              onClick={() => setCalendarOpen(true)}
-            >
-              Gestionar horarios
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="ganancias-box">
-        <div className="ganancia-card">
-          <h3>{esHoy ? "Ganancia Hoy" : `Ganancia ${fechaSeleccionada}`}</h3>
-          <p>${gananciaDelDia}</p>
-        </div>
-
-        <div className="ganancia-card">
-          <h3>Ganancia del Mes</h3>
-          <p>${gananciaDelMesSeleccionado}</p>
-        </div>
-      </div>
-
-      <div className="grafico-container">
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={graficoData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={100}
-              label={({ name, value }) => `${name}: $${value}`}
-              onClick={() => setModalGraficoOpen(true)}
-            >
-              {graficoData.map((_, index) => (
-                <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    <button
+                      className="btn-secondary"
+                      onClick={() => cancelarTurno(turno.id)}
+                    >
+                      Cancelar
+                    </button>
+                  </td>
+                </tr>
               ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+            </tbody>
+          </table>
+        </div>
+        <div className="admin-card compact">
+          <div className="admin-header"></div>
+        </div>
+        <button className="btn-secondary" onClick={() => setCalendarOpen(true)}>
+          Gestionar horarios
+        </button>
+      </div>
+
+      <div className="graficos-container">
+        {/* GRAFICO DIA */}
+        <div className="grafico-box">
+          <h3>{esHoy ? "Ganancia Hoy" : `Ganancia ${fechaSeleccionada}`}</h3>
+
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie
+                data={graficoDia}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={85}
+                onClick={() => setModalGraficoOpen(true)}
+              >
+                <Cell fill="#00c853" />
+              </Pie>
+
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* GRAFICO MES */}
+        <div className="grafico-box">
+          <h3>Ganancia del Mes</h3>
+
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie
+                data={graficoMes}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={85}
+                onClick={() => setModalMesOpen(true)}
+              >
+                <Cell fill="#2962ff" />
+              </Pie>
+
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {calendarOpen && (
@@ -313,6 +322,33 @@ export default function BarberoPanel({}: Props) {
               <button
                 className="btn-secondary"
                 onClick={() => setModalGraficoOpen(false)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalMesOpen && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>Ganancia total del mes</h2>
+
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "28px",
+                margin: "20px 0",
+              }}
+            >
+              ${gananciaDelMesSeleccionado}
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => setModalMesOpen(false)}
               >
                 Cerrar
               </button>

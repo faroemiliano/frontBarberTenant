@@ -255,7 +255,7 @@ function GraficoPie({
               nameKey="servicio"
               cx="50%"
               cy="50%"
-              outerRadius={100}
+              outerRadius={85}
               onClick={() => {
                 if (tipo === "dia") setModalDetalleOpen(true);
                 if (tipo === "mes") setModalMesOpen(true);

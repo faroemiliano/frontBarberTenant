@@ -1137,6 +1137,8 @@ section {
   font-weight: 600;
   font-size: 0.9rem;
   text-transform: capitalize;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .no-turnos {
@@ -1159,6 +1161,10 @@ section {
   border-radius: 12px;
   padding: 12px 60px;
   margin-bottom: 16px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .admin-title {
@@ -1253,20 +1259,6 @@ section {
 
 /* RESPONSIVE */
 
-@media (max-width: 768px) {
-  .admin-container {
-    padding: 20px;
-  }
-
-  .admin-header h2 {
-    font-size: 1.4rem;
-  }
-
-  .admin-table th,
-  .admin-table td {
-    padding: 10px;
-  }
-}
 .hour-card.blocked {
   background: #2b2b2b;
   color: #888;
@@ -1427,16 +1419,19 @@ section {
   display: flex;
   gap: 20px;
   justify-content: space-between;
+  align-items: stretch;
+  flex-wrap: wrap;
 }
 
 .grafico-wrapper {
-  width: 48%;
+  flex: 1;
+  min-width: 300px;
   padding: 10px;
-  min-width: 0;
 }
 
 .grafico-title {
   text-align: center;
+  margin-bottom: 6px;
 }
 
 .grafico-fecha {
@@ -1448,9 +1443,27 @@ section {
   margin: 0 10px;
 }
 
+/* CONTENEDOR DEL GRAFICO */
+
 .grafico-container {
   width: 100%;
-  height: 300px;
+  height: 320px;
+  position: relative;
+}
+
+/* GRAFICOS DEL BARBERO */
+
+.grafico-box {
+  flex: 1;
+  background: #111;
+  padding: 30px;
+  border-radius: 12px;
+  min-height: 420px;
+}
+
+.grafico-box h3 {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 /* =====================
@@ -1992,4 +2005,58 @@ section {
 
 .rol-cliente {
   background: #3498db;
+}
+/* =============================
+   TABLA RESPONSIVE ADMIN
+============================= */
+
+@media (max-width: 768px) {
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-table tr {
+    background: #0f172a;
+    margin-bottom: 16px;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+  }
+
+  .admin-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #1e293b;
+  }
+
+  .admin-table td:last-child {
+    border-bottom: none;
+  }
+
+  .admin-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #22c55e;
+  }
+
+  .admin-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .admin-actions button {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
 }
