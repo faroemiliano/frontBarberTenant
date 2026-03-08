@@ -1894,3 +1894,102 @@ section {
   border-top: 2px solid #00c853;
   padding-top: 10px;
 }
+
+/* FORMULARIO DE CONVERTIR BARBERO */
+
+.admin-usuarios-form {
+  background: #1f1f1f;
+  padding: 25px;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 850px;
+  margin: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* scroll comienza después de 300px */
+.admin-usuarios-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+
+/* tabla */
+.admin-usuarios-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: white;
+}
+
+/* encabezado */
+.admin-usuarios-table th {
+  text-align: left;
+  padding: 12px;
+  font-weight: 600;
+  background: #2a2a2a;
+}
+
+/* celdas */
+.admin-usuarios-table td {
+  padding: 12px;
+  border-bottom: 1px solid #333;
+}
+
+/* hover fila */
+.admin-usuarios-table tr:hover {
+  background: #2c2c2c;
+}
+
+/* acciones */
+.admin-usuarios-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* botones */
+.admin-btn-barbero {
+  background: #2d8cff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+.admin-btn-barbero:hover {
+  background: #4aa0ff;
+}
+
+.admin-btn-cliente {
+  background: #ff4d4d;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+.admin-btn-cliente:hover {
+  background: #ff6a6a;
+}
+
+/* badges rol */
+.rol-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.rol-admin {
+  background: #ffb020;
+  color: black;
+}
+
+.rol-barbero {
+  background: #2ecc71;
+}
+
+.rol-cliente {
+  background: #3498db;
+}

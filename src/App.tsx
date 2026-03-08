@@ -16,7 +16,7 @@ const AdminTurnos = lazy(() => import("./components/admin/AdminTurnos"));
 const AdminGanancias = lazy(() => import("./components/admin/AdminGanancias"));
 const AdminServicios = lazy(() => import("./components/admin/AdminServicios"));
 const BarberoPanel = lazy(() => import("./components/barbero/BarberoPanel"));
-
+const AdminUsuarios = lazy(() => import("./components/admin/AdminUsuarios"));
 import "./styles.css";
 
 function Loader() {
@@ -92,6 +92,7 @@ export default function App() {
             <Route path="turnos" element={<AdminTurnos />} />
             <Route path="ganancias" element={<AdminGanancias />} />
             <Route path="servicios" element={<AdminServicios />} />
+            <Route path="usuarios" element={<AdminUsuarios />} />
           </Route>
 
           {/* BARBERO */}

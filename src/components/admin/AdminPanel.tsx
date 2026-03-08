@@ -33,10 +33,10 @@ export default function AdminPanel() {
 
         {/* 🆕 AUTORIZAR BARBERO */}
         <button
-          onClick={() => navigate("/admin/autorizar-barbero")}
+          onClick={() => navigate("/admin/usuarios")}
           className="btn-secondary"
         >
-          Autorizar Barbero
+          Gestionar Usuarios
         </button>
       </div>
 
