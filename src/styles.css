@@ -1519,93 +1519,97 @@ section {
 }
 
 /* 🔥 Área scrolleable */
+/* Variables globales de color */
+:root {
+  --dark-bg: #1f2937;
+  --dark-card: #111827;
+  --border-color: #374151;
+  --text-light: #d1fae5;
+  --green-main: #16a34a;
+  --green-hover: #22c55e;
+  --chip-bg: #166534;
+  --chip-text: #a7f3d0;
+}
+
+/* Contenedor de tarjetas */
 .turnos-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-  overflow-y: auto; /* 🔥 scroll vertical */
-  padding-right: 0.5rem;
-  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-/* Scroll custom */
-.turnos-form::-webkit-scrollbar {
-  width: 6px;
-}
-
-.turnos-form::-webkit-scrollbar-thumb {
-  background: #22c55e;
-  border-radius: 4px;
-}
-
+/* Tarjeta compacta y moderna */
 .turno-form-card {
+  background: var(--dark-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  border: 1px solid #374151;
-  padding: 1rem;
-  border-radius: 10px;
-  background-color: #111827;
-  color: #f9fafb;
-  transition: 0.2s ease;
+  gap: 8px;
+  color: var(--text-light);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .turno-form-card:hover {
-  border-color: #22c55e;
   transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
 }
 
-.turno-form-card div {
-  display: flex;
-  flex-wrap: wrap; /* 🔥 permite adaptarse */
-  gap: 0.5rem;
-  align-items: center;
-}
-
+/* Labels e inputs */
 .turno-form-card label {
   font-weight: 600;
-  min-width: 90px;
-  color: #22c55e;
+  font-size: 12px;
+  color: var(--green-main);
+  margin-bottom: 2px;
 }
 
 .turno-form-card input {
-  flex: 1;
-  min-width: 120px;
-  padding: 0.5rem;
-  border: 1px solid #374151;
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
-  background: #1e293b;
-  color: #f9fafb;
+  background: var(--dark-bg);
+  font-size: 13px;
+  color: var(--text-light);
 }
 
+/* Chips más compactos */
 .chip {
   display: inline-block;
-  background: #1e293b;
-  padding: 0.3rem 0.6rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  margin-right: 0.5rem;
-  margin-top: 0.3rem;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  margin-right: 4px;
+  margin-bottom: 4px;
 }
 
+/* Botón cancelar moderno */
 .btn-cancel-form {
-  align-self: flex-end;
-  padding: 0.5rem 0.9rem;
+  align-self: flex-start;
+  background: var(--green-main);
+  color: #f0fdf4;
+  padding: 6px 12px;
   border: none;
-  background-color: #ef4444;
-  color: #fff;
-  border-radius: 6px;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 0.5rem;
-  transition: 0.2s;
+  font-size: 13px;
+  transition:
+    background 0.2s,
+    transform 0.2s;
 }
 
 .btn-cancel-form:hover {
-  background-color: #dc2626;
-}
-
-.btn-close-form {
-  margin-top: auto; /* 🔥 empuja hacia abajo */
+  background: var(--green-hover);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 480px) {
@@ -1883,4 +1887,10 @@ section {
   font-size: 18px;
   font-weight: 700;
   color: #dae7e3;
+}
+
+.turnos-table tfoot td {
+  font-size: 18px;
+  border-top: 2px solid #00c853;
+  padding-top: 10px;
 }

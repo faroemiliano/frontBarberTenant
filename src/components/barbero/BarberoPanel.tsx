@@ -37,7 +37,7 @@ export default function BarberoPanel({}: Props) {
   const [data, setData] = useState<PanelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [turnoEditando, setTurnoEditando] = useState<Turno | null>(null);
-
+  const [modalGraficoOpen, setModalGraficoOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const hoyLocal = () => {
@@ -245,6 +245,7 @@ export default function BarberoPanel({}: Props) {
               cy="50%"
               outerRadius={100}
               label={({ name, value }) => `${name}: $${value}`}
+              onClick={() => setModalGraficoOpen(true)}
             >
               {graficoData.map((_, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
@@ -265,6 +266,53 @@ export default function BarberoPanel({}: Props) {
               <button
                 className="btn-secondary"
                 onClick={() => setCalendarOpen(false)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {modalGraficoOpen && (
+        <div className="modal-overlay">
+          <div className="modal-box large">
+            <h2>Detalle de turnos</h2>
+
+            <table className="turnos-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Servicio</th>
+                  <th>Precio</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {turnosFiltrados.map((t) => (
+                  <tr key={t.id}>
+                    <td>{t.cliente}</td>
+                    <td>{t.servicio}</td>
+                    <td>${t.precio}</td>
+                  </tr>
+                ))}
+              </tbody>
+
+              <tfoot>
+                <tr>
+                  <td colSpan={2}>
+                    <b>Total</b>
+                  </td>
+                  <td>
+                    <b>${gananciaDelDia}</b>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div className="modal-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => setModalGraficoOpen(false)}
               >
                 Cerrar
               </button>

@@ -40,7 +40,7 @@ export default function Hero({ user, onLogin }: Props) {
         {/* NO LOGUEADO */}
         {!user && (
           <div className="hero-login">
-            <button className="cta" onClick={onLogin}>
+            <button className="btn-secondary" onClick={onLogin}>
               Para sacar turno Iniciar sesión
             </button>
           </div>
