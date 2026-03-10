@@ -3,8 +3,8 @@ import { apiFetch } from "../api";
 
 interface Horario {
   id: number;
-  fecha: string; // YYYY-MM-DD
-  hora: string; // HH:MM
+  fecha: string;
+  hora: string;
   disponible: boolean;
 }
 
@@ -101,14 +101,12 @@ export default function Calendar({
         if (!res.ok) throw new Error("Error cargando horarios");
 
         const data: Horario[] = await res.json();
-        console.log("HORARIOS QUE DEVUELVE LA API:", data);
 
         if (!Array.isArray(data)) throw new Error("Datos inválidos");
 
         setHorarios(data);
 
         const uniqueDays = Array.from(new Set(data.map((h) => h.fecha))).sort();
-
         setDias(uniqueDays);
 
         const hoy = todayISO();
@@ -131,8 +129,11 @@ export default function Calendar({
 
   const inicio = page * DIAS_POR_PAGINA;
   const fin = inicio + DIAS_POR_PAGINA;
+
   const diasVisibles = dias.slice(inicio, fin);
+
   const horariosDelDia = horarios.filter((h) => h.fecha === diaActivo);
+
   const hayDisponibles = horarios.some((h) => h.disponible);
 
   if (loading) return <p>Cargando horarios...</p>;
@@ -192,7 +193,9 @@ export default function Calendar({
               <span className="day-name">
                 {date.toLocaleDateString("es-AR", { weekday: "short" })}
               </span>
+
               <span className="day-number">{date.getDate()}</span>
+
               <span className="day-month">
                 {date.toLocaleDateString("es-AR", { month: "short" })}
               </span>
@@ -211,7 +214,7 @@ export default function Calendar({
             <div className="hours-grid">
               {horariosDelDia.map((h) => (
                 <button
-                  key={h.id}
+                  key={`${h.id}-${h.hora}`}
                   className={`hour-card ${
                     horarioActivo?.id === h.id ? "active" : ""
                   } ${!h.disponible ? "blocked" : ""}`}
