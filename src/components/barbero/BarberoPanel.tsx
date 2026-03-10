@@ -61,6 +61,7 @@ export default function BarberoPanel({}: Props) {
   const [modalGraficoOpen, setModalGraficoOpen] = useState(false);
   const [modalMesOpen, setModalMesOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [vista, setVista] = useState<"inicio" | "gestiones">("inicio");
 
   const hoyLocal = () => {
     const d = new Date();
@@ -145,126 +146,161 @@ export default function BarberoPanel({}: Props) {
       <div className="admin-card">
         <h1 className="admin-title">Panel del Barbero</h1>
 
-        <div className="admin-day-nav">
-          <button
-            className="btn-secondary"
-            onClick={() =>
-              setFechaSeleccionada(moverDiaISO(fechaSeleccionada, -1))
-            }
-          >
-            Día anterior
+        <div className="admin-nav-buttons">
+          <button className="btn-secondary" onClick={() => setVista("inicio")}>
+            Inicio
           </button>
-
-          <span className="admin-day-label">{isoToDMY(fechaSeleccionada)}</span>
 
           <button
             className="btn-secondary"
-            onClick={() =>
-              setFechaSeleccionada(moverDiaISO(fechaSeleccionada, 1))
-            }
+            onClick={() => setVista("gestiones")}
           >
-            Día siguiente
+            Gestiones
           </button>
         </div>
-        <div className="admin-turnos-scroll">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Teléfono</th>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Servicio</th>
-                <th>Precio</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {turnosFiltrados.map((turno) => (
-                <tr key={turno.id}>
-                  <td data-label="Cliente">{turno.cliente}</td>
-                  <td data-label="Telefono">{turno.telefono}</td>
-                  <td data-label="Fecha">{turno.fecha}</td>
-                  <td data-label="Hora">{turno.hora}</td>
-                  <td data-label="Servicio">{turno.servicio}</td>
-                  <td data-label="Precio">${turno.precio}</td>
-                  <td>
-                    <button
-                      className="btn-secondary"
-                      onClick={() => setTurnoEditando(turno)}
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      className="btn-secondary"
-                      onClick={() => cancelarTurno(turno.id)}
-                    >
-                      Cancelar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="admin-card compact">
-          <div className="admin-header"></div>
-        </div>
-        <button className="btn-secondary" onClick={() => setCalendarOpen(true)}>
-          Gestionar horarios
-        </button>
       </div>
 
-      <div className="graficos-container">
-        {/* GRAFICO DIA */}
-        <div className="grafico-box">
-          <h3>{esHoy ? "Ganancia Hoy" : `Ganancia ${fechaSeleccionada}`}</h3>
+      {/* VISTA INICIO */}
+      {vista === "inicio" && (
+        <div className="admin-agenda">
+          <h2 className="agenda-title">Agenda</h2>
 
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={graficoDia}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={85}
-                onClick={() => setModalGraficoOpen(true)}
-              >
-                <Cell fill="#00c853" />
-              </Pie>
-
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <Calendar mode="barbero" />
         </div>
+      )}
 
-        {/* GRAFICO MES */}
-        <div className="grafico-box">
-          <h3>Ganancia del Mes</h3>
-
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={graficoMes}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={85}
-                onClick={() => setModalMesOpen(true)}
+      {/* VISTA GESTIONES */}
+      {vista === "gestiones" && (
+        <>
+          <div className="admin-card">
+            <div className="admin-day-nav">
+              <button
+                className="btn-secondary"
+                onClick={() =>
+                  setFechaSeleccionada(moverDiaISO(fechaSeleccionada, -1))
+                }
               >
-                <Cell fill="#2962ff" />
-              </Pie>
+                Día anterior
+              </button>
 
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+              <span className="admin-day-label">
+                {isoToDMY(fechaSeleccionada)}
+              </span>
+
+              <button
+                className="btn-secondary"
+                onClick={() =>
+                  setFechaSeleccionada(moverDiaISO(fechaSeleccionada, 1))
+                }
+              >
+                Día siguiente
+              </button>
+            </div>
+
+            <div className="admin-turnos-scroll">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Teléfono</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Servicio</th>
+                    <th>Precio</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {turnosFiltrados.map((turno) => (
+                    <tr key={turno.id}>
+                      <td data-label="Cliente">{turno.cliente}</td>
+                      <td data-label="Telefono">{turno.telefono}</td>
+                      <td data-label="Fecha">{turno.fecha}</td>
+                      <td data-label="Hora">{turno.hora}</td>
+                      <td data-label="Servicio">{turno.servicio}</td>
+                      <td data-label="Precio">${turno.precio}</td>
+
+                      <td>
+                        <button
+                          className="btn-secondary"
+                          onClick={() => setTurnoEditando(turno)}
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          className="btn-secondary"
+                          onClick={() => cancelarTurno(turno.id)}
+                        >
+                          Cancelar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              className="btn-secondary"
+              onClick={() => setCalendarOpen(true)}
+            >
+              Gestionar horarios
+            </button>
+          </div>
+
+          <div className="graficos-container">
+            <div className="grafico-box">
+              <h3>
+                {esHoy ? "Ganancia Hoy" : `Ganancia ${fechaSeleccionada}`}
+              </h3>
+
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={graficoDia}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={85}
+                    onClick={() => setModalGraficoOpen(true)}
+                  >
+                    <Cell fill="#00c853" />
+                  </Pie>
+
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="grafico-box">
+              <h3>Ganancia del Mes</h3>
+
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={graficoMes}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={85}
+                    onClick={() => setModalMesOpen(true)}
+                  >
+                    <Cell fill="#2962ff" />
+                  </Pie>
+
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </>
+      )}
 
       {calendarOpen && (
         <div className="modal-overlay">
@@ -282,6 +318,7 @@ export default function BarberoPanel({}: Props) {
           </div>
         </div>
       )}
+
       {modalGraficoOpen && (
         <div className="modal-overlay">
           <div className="modal-box large">

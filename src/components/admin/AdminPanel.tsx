@@ -1,15 +1,25 @@
-console.log("ADMIN PANEL MONTADO");
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import Calendar from "../Calendar";
+import { getUser } from "../../auth";
 
 export default function AdminPanel() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const user = getUser();
+  const barberoId = user?.id;
+
+  const isHome = location.pathname === "/admin";
 
   return (
     <section className="admin-panel">
       <h1 className="admin-title">Panel Administrador</h1>
 
-      {/* 🔘 BOTONES PRINCIPALES */}
       <div className="admin-nav-buttons">
+        <button onClick={() => navigate("/admin")} className="btn-secondary">
+          Inicio
+        </button>
+
         <button
           onClick={() => navigate("/admin/turnos")}
           className="btn-secondary"
@@ -31,7 +41,6 @@ export default function AdminPanel() {
           Servicios
         </button>
 
-        {/* 🆕 AUTORIZAR BARBERO */}
         <button
           onClick={() => navigate("/admin/usuarios")}
           className="btn-secondary"
@@ -40,10 +49,26 @@ export default function AdminPanel() {
         </button>
       </div>
 
-      <hr />
+      {/* PAGINA INICIO */}
+      {isHome && (
+        <>
+          <hr />
 
-      {/* 👇 ACÁ SE RENDERIZA TURNOS, GANANCIAS, SERVICIOS O AUTORIZAR BARBERO */}
-      <Outlet />
+          <div className="admin-agenda">
+            <h2 className="agenda-title">Turnos de Hoy</h2>
+
+            {barberoId && <Calendar mode="admin" barberoId={barberoId} />}
+          </div>
+        </>
+      )}
+
+      {/* OTRAS SECCIONES */}
+      {!isHome && (
+        <>
+          <hr />
+          <Outlet />
+        </>
+      )}
     </section>
   );
 }

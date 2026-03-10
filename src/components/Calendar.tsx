@@ -72,7 +72,10 @@ export default function Calendar({
 
   useEffect(() => {
     async function cargarHorarios() {
-      if (mode !== "barbero" && !barberoId) return;
+      if (mode !== "barbero" && !barberoId) {
+        setLoading(false);
+        return;
+      }
 
       setLoading(true);
 
@@ -98,6 +101,8 @@ export default function Calendar({
         if (!res.ok) throw new Error("Error cargando horarios");
 
         const data: Horario[] = await res.json();
+        console.log("HORARIOS QUE DEVUELVE LA API:", data);
+
         if (!Array.isArray(data)) throw new Error("Datos inválidos");
 
         setHorarios(data);
