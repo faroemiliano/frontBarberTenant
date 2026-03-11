@@ -10,6 +10,9 @@ interface Usuario {
 
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [emailUsuario, setEmailUsuario] = useState("");
+  const [mensaje, setMensaje] = useState("");
+
   const token = localStorage.getItem("token");
 
   async function cargarUsuarios() {
@@ -17,12 +20,30 @@ export default function AdminUsuarios() {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = await res.json();
-    setUsuarios(data);
+    const data: Usuario[] = await res.json();
+
+    const ordenados = data.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    setUsuarios(ordenados);
   }
 
-  async function cambiarRol(id: number, rol: string) {
-    await apiFetch(`/admin/cambiar-rol/${id}`, {
+  function buscarUsuario() {
+    return usuarios.find(
+      (u) => u.email.toLowerCase() === emailUsuario.toLowerCase(),
+    );
+  }
+
+  async function cambiarRol(rol: string) {
+    setMensaje("");
+
+    const usuario = buscarUsuario();
+
+    if (!usuario) {
+      setMensaje("No existe un usuario con ese email");
+      return;
+    }
+
+    await apiFetch(`/admin/cambiar-rol/${usuario.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -31,6 +52,13 @@ export default function AdminUsuarios() {
       body: JSON.stringify({ rol }),
     });
 
+    setMensaje(
+      rol === "barbero"
+        ? "Usuario convertido en barbero"
+        : "Barbero removido correctamente",
+    );
+
+    setEmailUsuario("");
     cargarUsuarios();
   }
 
@@ -42,49 +70,55 @@ export default function AdminUsuarios() {
     <div className="admin-card">
       <h2>Gestión de usuarios</h2>
 
-      <div className="admin-usuarios-form">
-        <div className="admin-usuarios-scroll">
-          <table className="admin-usuarios-table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
+      <div className="admin-barbero-form">
+        <h3>Gestionar barberos</h3>
 
-            <tbody>
-              {usuarios.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.nombre}</td>
-                  <td>{u.email}</td>
-                  <td className={`rol-badge rol-${u.rol}`}>{u.rol}</td>
+        <input
+          type="email"
+          placeholder="Email del usuario"
+          value={emailUsuario}
+          onChange={(e) => setEmailUsuario(e.target.value)}
+        />
 
-                  <td className="admin-usuarios-actions">
-                    {u.rol !== "barbero" && (
-                      <button
-                        className="admin-btn-barbero"
-                        onClick={() => cambiarRol(u.id, "barbero")}
-                      >
-                        Hacer barbero
-                      </button>
-                    )}
+        <div className="admin-barbero-actions">
+          <button
+            className="admin-btn-barbero"
+            onClick={() => cambiarRol("barbero")}
+          >
+            Convertir en barbero
+          </button>
 
-                    {u.rol === "barbero" && (
-                      <button
-                        className="admin-btn-cliente"
-                        onClick={() => cambiarRol(u.id, "cliente")}
-                      >
-                        Quitar barbero
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <button
+            className="admin-btn-cliente"
+            onClick={() => cambiarRol("cliente")}
+          >
+            Quitar barbero
+          </button>
         </div>
+
+        {mensaje && <p className="admin-msg">{mensaje}</p>}
+      </div>
+
+      <div className="admin-usuarios-scroll">
+        <table className="admin-usuarios-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {usuarios.map((u) => (
+              <tr key={u.id}>
+                <td>{u.nombre}</td>
+                <td>{u.email}</td>
+                <td className={`rol-badge rol-${u.rol}`}>{u.rol}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

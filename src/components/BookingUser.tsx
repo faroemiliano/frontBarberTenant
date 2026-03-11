@@ -37,6 +37,7 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
   const [horarioConfirmado, setHorarioConfirmado] = useState(false);
   const [profesionales, setProfesionales] = useState<Profesional[]>([]);
   const [profesionalId, setProfesionalId] = useState<number | null>(null);
+  const [openProfesionales, setOpenProfesionales] = useState(false);
 
   /* CARGAR SERVICIOS DESDE BACKEND */
   useEffect(() => {
@@ -103,22 +104,35 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
     <>
       <h2>Reservar turno</h2>
       <div className="select-wrapper">
-        <select
-          value={profesionalId ?? ""}
-          onChange={(e) => {
-            const value = e.target.value;
-            setProfesionalId(value === "" ? null : Number(value));
-            setHorario(null);
-            setHorarioConfirmado(false);
-          }}
-        >
-          <option value="">Seleccionar profesional</option>
-          {profesionales.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre}
-            </option>
-          ))}
-        </select>
+        <div className="custom-select">
+          <button
+            className="select-trigger"
+            onClick={() => setOpenProfesionales(!openProfesionales)}
+          >
+            {profesionalId
+              ? profesionales.find((p) => p.id === profesionalId)?.nombre
+              : "Seleccionar profesional"}
+          </button>
+
+          {openProfesionales && (
+            <div className="select-dropdown">
+              {profesionales.map((p) => (
+                <div
+                  key={p.id}
+                  className="select-option"
+                  onClick={() => {
+                    setProfesionalId(p.id);
+                    setHorario(null);
+                    setHorarioConfirmado(false);
+                    setOpenProfesionales(false);
+                  }}
+                >
+                  {p.nombre}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="services-grid">
