@@ -7,42 +7,49 @@ export default function AdminPanel() {
   const location = useLocation();
 
   const user = getUser();
+  if (!user || user.rol !== "admin") {
+    navigate("/");
+    return null;
+  }
   const barberoId = user?.id;
 
-  const isHome = location.pathname === "/admin";
+  const isHome = location.pathname.endsWith("/admin");
 
   return (
     <section className="admin-panel">
       <h1 className="admin-title">Panel Administrador</h1>
 
       <div className="admin-nav-buttons">
-        <button onClick={() => navigate("/admin")} className="btn-secondary">
+        <button
+          onClick={() => navigate(".", { relative: "path" })}
+          className="btn-secondary"
+        >
           Inicio
         </button>
 
         <button
-          onClick={() => navigate("/admin/turnos")}
+          onClick={() => navigate("turnos", { relative: "path" })}
           className="btn-secondary"
         >
           Turnos
         </button>
 
         <button
-          onClick={() => navigate("/admin/ganancias")}
+          onClick={() => navigate("ganancias", { relative: "path" })}
           className="btn-secondary"
         >
           Ganancias
         </button>
 
         <button
-          onClick={() => navigate("/admin/servicios")}
+          onClick={() => navigate("servicios", { relative: "path" })}
           className="btn-secondary"
         >
           Servicios
         </button>
 
         <button
-          onClick={() => navigate("/admin/usuarios")}
+          onClick={() => navigate("usuarios", { relative: "path" })}
           className="btn-secondary"
         >
           Gestionar Usuarios

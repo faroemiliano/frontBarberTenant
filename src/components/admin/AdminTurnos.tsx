@@ -65,6 +65,7 @@ export default function AdminPanel() {
   const [barberoActivo, setBarberoActivo] = useState<number | null>(null);
 
   const turnosDelDia = useMemo(() => {
+    if (!Array.isArray(turnos)) return [];
     return turnos.filter((t) => t.fecha === diaActivo);
   }, [turnos, diaActivo]);
 
@@ -72,8 +73,25 @@ export default function AdminPanel() {
     const res = await apiFetch("/admin/turnos", {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
+
+    if (!res.ok) {
+      console.error("No autorizado o error");
+
+      // 👇 SI NO ES ADMIN → NO ROMPER
+      setTurnos([]);
+      setLoading(false);
+      return;
+    }
+
     const data = await res.json();
-    setTurnos(data);
+
+    // 👇 SEGURIDAD EXTRA
+    if (!Array.isArray(data)) {
+      setTurnos([]);
+    } else {
+      setTurnos(data);
+    }
+
     setLoading(false);
   };
 
@@ -88,13 +106,19 @@ export default function AdminPanel() {
   };
 
   useEffect(() => {
+    const slug = localStorage.getItem("barberia_slug");
+
+    if (!slug) {
+      console.warn("❌ No hay barbería todavía");
+      return;
+    }
+
     cargarTurnos();
 
     apiFetch("/admin/servicios")
       .then((res) => res.json())
       .then(setServicios);
 
-    // Traer barberos
     apiFetch("/profesionales", {
       headers: { Authorization: `Bearer ${getToken()}` },
     })

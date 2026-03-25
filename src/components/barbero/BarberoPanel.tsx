@@ -10,6 +10,8 @@ import {
 import Calendar from "../Calendar";
 import BookingModal from "../BookingModal";
 import { apiFetch } from "../../api";
+import { useParams } from "react-router-dom";
+import { getToken } from "../../auth";
 
 interface Turno {
   id: number;
@@ -72,17 +74,41 @@ export default function BarberoPanel({}: Props) {
   };
 
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyLocal());
-  const token = localStorage.getItem("token");
+  const token = getToken(); // toma el token del localStorage del slug actual
+  if (!token) {
+    console.error("❌ No hay token en localStorage");
+    return;
+  }
+
+  const { barberia } = useParams();
 
   const fetchPanel = async () => {
+    console.log("🔥 TOKEN:", token);
     try {
       const res = await apiFetch("/panel-barbero", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(barberia ? { "x-barberia": barberia } : {}),
+        },
       });
+
+      if (!res.ok) {
+        console.error("❌ Error backend:", res.status);
+        setData({ turnos: [], dinero_diario: 0, dinero_mensual: 0 });
+        return;
+      }
+
       const json = await res.json();
-      setData(json);
+
+      // 🔒 fallback defensivo
+      setData({
+        turnos: json.turnos || [],
+        dinero_diario: json.dinero_diario || 0,
+        dinero_mensual: json.dinero_mensual || 0,
+      });
     } catch (err) {
-      console.error(err);
+      console.error("💥 Error fetch:", err);
+      setData({ turnos: [], dinero_diario: 0, dinero_mensual: 0 });
     } finally {
       setLoading(false);
     }
@@ -101,9 +127,10 @@ export default function BarberoPanel({}: Props) {
   };
 
   if (loading) return <div className="panel-loading">Cargando...</div>;
-  if (!data) return <div>Error</div>;
+  const turnos = data?.turnos || [];
 
-  const turnosFiltrados = data.turnos.filter((t) => {
+  const turnosFiltrados = turnos.filter((t) => {
+    if (!t.fecha) return false;
     const fechaTurno = t.fecha.split("T")[0];
     return fechaTurno === fechaSeleccionada;
   });
@@ -115,7 +142,7 @@ export default function BarberoPanel({}: Props) {
 
   const fechaObj = new Date(fechaSeleccionada);
 
-  const gananciaDelMesSeleccionado = data.turnos
+  const gananciaDelMesSeleccionado = turnos
     .filter((t) => {
       const fechaTurno = new Date(t.fecha);
       return (

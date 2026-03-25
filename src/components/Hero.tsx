@@ -6,6 +6,7 @@ import locationLogo from "../assets/logos/logoUbi.png";
 import instagramLogo from "../assets/logos/logoInsta.png";
 import whatsappLogo from "../assets/logos/logoWhats.png";
 import fondo from "../assets/fondoPantalla.png";
+import { useBarberia } from "../../BarberiaContext";
 
 interface Props {
   user: any;
@@ -16,11 +17,16 @@ export default function Hero({ user, onLogin }: Props) {
   const [openBooking, setOpenBooking] = useState(false);
   const [misTurnos, setMisTurnos] = useState(false);
 
+  const barberia = useBarberia();
+
   return (
     <section className="hero" style={{ backgroundImage: `url(${fondo})` }}>
       <img src={logoTitulo} alt="Barbería 1991" className="hero-logo-bg" />
 
       <div className="hero-main">
+        <p>
+          Bienvenido a <strong>{barberia?.nombre || "nuestra barbería"}</strong>
+        </p>
         {/* ICONOS */}
         <div className="hero-icons">
           <a href="https://maps.app.goo.gl/cESJbAGczdZVZnL7A" target="_blank">

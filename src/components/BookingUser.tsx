@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Calendar from "./Calendar";
 import { getToken } from "../auth";
 import { apiFetch } from "../api";
+import { useParams } from "react-router-dom";
 
 interface HorarioSeleccionado {
   id: number;
@@ -38,21 +39,28 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
   const [profesionales, setProfesionales] = useState<Profesional[]>([]);
   const [profesionalId, setProfesionalId] = useState<number | null>(null);
   const [openProfesionales, setOpenProfesionales] = useState(false);
-
-  /* CARGAR SERVICIOS DESDE BACKEND */
-  useEffect(() => {
-    apiFetch("/admin/servicios")
-      .then((res) => res.json())
-      .then((data) => setServicios(data))
-      .catch(() => setMensaje("No se pudieron cargar los servicios"));
-  }, []);
+  const { barberia } = useParams(); /* CARGAR SERVICIOS DESDE BACKEND */
 
   useEffect(() => {
+    if (!barberia) return;
+
+    localStorage.setItem("barberia_slug", barberia);
+
+    // 🔥 después llamar APIs
     apiFetch("/profesionales")
       .then((res) => res.json())
-      .then((data) => setProfesionales(data))
-      .catch(() => setMensaje("No se pudieron cargar los profesionales"));
-  }, []);
+      .then((data) => {
+        if (Array.isArray(data)) setProfesionales(data);
+        else setProfesionales([]);
+      });
+
+    apiFetch("/admin/servicios")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setServicios(data);
+        else setServicios([]);
+      });
+  }, [barberia]);
 
   async function reservar() {
     setMensaje("");
@@ -99,7 +107,7 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
       setLoading(false);
     }
   }
-
+  console.log("PROFESIONALES:", profesionales);
   return (
     <>
       <h2>Reservar turno</h2>

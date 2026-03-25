@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Modal from "./components/Modal";
@@ -10,14 +10,17 @@ const Hero = lazy(() => import("./components/Hero"));
 const Login = lazy(() => import("./components/Login"));
 const CutsGallery = lazy(() => import("./components/CutsGallery"));
 const Footer = lazy(() => import("./components/Footer"));
-
+const SuperAdminPanel = lazy(() => import("./components/SuperAdmin"));
 const AdminPanel = lazy(() => import("./components/admin/AdminPanel"));
 const AdminTurnos = lazy(() => import("./components/admin/AdminTurnos"));
 const AdminGanancias = lazy(() => import("./components/admin/AdminGanancias"));
 const AdminServicios = lazy(() => import("./components/admin/AdminServicios"));
 const BarberoPanel = lazy(() => import("./components/barbero/BarberoPanel"));
 const AdminUsuarios = lazy(() => import("./components/admin/AdminUsuarios"));
+const BookingUser = lazy(() => import("./components/BookingUser"));
 import "./styles.css";
+import { BarberiaProvider } from "../BarberiaContext";
+import GoogleLoginButton from "./components/GoogleLoginButton";
 
 function Loader() {
   return (
@@ -36,6 +39,68 @@ function Loader() {
   );
 }
 
+function RutasInternas({ user, setShowLogin }: any) {
+  const { barberia } = useParams(); // 🔥 ESTE ES EL SLUG
+  useEffect(() => {
+    if (barberia) {
+      localStorage.setItem("barberia_slug", barberia);
+      console.log("🔥 guardando slug:", barberia);
+    }
+  }, [barberia]);
+  return (
+    <Routes>
+      {/* HOME */}
+      <Route
+        path="/"
+        element={
+          user?.rol === "admin" ? (
+            <Navigate to={`/${barberia}/admin`} />
+          ) : user?.rol === "barbero" ? (
+            <Navigate to={`/${barberia}/barbero`} />
+          ) : (
+            <>
+              <Hero user={user} onLogin={() => setShowLogin(true)} />
+              <CutsGallery />
+              <Footer />
+            </>
+          )
+        }
+      />
+      <Route path="reservar" element={<BookingUser onClose={() => {}} />} />
+
+      {/* ADMIN */}
+      <Route
+        path="admin"
+        element={
+          user?.rol === "admin" ? (
+            <AdminPanel />
+          ) : (
+            <Navigate to={`/${barberia}`} />
+          )
+        }
+      >
+        <Route index element={<Navigate to="turnos" />} />
+        <Route path="turnos" element={<AdminTurnos />} />
+        <Route path="ganancias" element={<AdminGanancias />} />
+        <Route path="servicios" element={<AdminServicios />} />
+        <Route path="usuarios" element={<AdminUsuarios />} />
+      </Route>
+
+      {/* BARBERO */}
+      <Route
+        path="barbero"
+        element={
+          user?.rol === "barbero" ? (
+            <BarberoPanel userId={user!.id} />
+          ) : (
+            <Navigate to={`/${barberia}`} />
+          )
+        }
+      />
+    </Routes>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(getUser());
   const [showLogin, setShowLogin] = useState(false);
@@ -51,6 +116,7 @@ export default function App() {
     setUser(null);
   };
 
+  console.log("Usuario actual:", user);
   return (
     <>
       <Navbar
@@ -61,49 +127,28 @@ export default function App() {
       <div className="hero-divider" />
       <Suspense fallback={<Loader />}>
         <Routes>
-          {/* HOME */}
+          {/* RUTA SUPERADMIN */}
           <Route
-            path="/"
+            path="/superadmin"
             element={
-              user?.rol === "admin" ? (
-                <Navigate to="/admin" />
-              ) : user?.rol === "barbero" ? (
-                <Navigate to="/barbero" />
+              user?.rol === "superadmin" ? (
+                <SuperAdminPanel />
               ) : (
                 <>
-                  <Hero user={user} onLogin={() => setShowLogin(true)} />
-                  <div className="hero-divider" />
-                  <CutsGallery />
-                  <div className="hero-divider" />
-                  <Footer />
+                  <h2>Login SuperAdmin</h2>
+                  <GoogleLoginButton onSuccess={() => setUser(getUser())} />
                 </>
               )
             }
           />
 
-          {/* ADMIN */}
+          {/* RUTAS DE BARBERÍAS */}
           <Route
-            path="/admin"
+            path="/:barberia/*"
             element={
-              user?.rol === "admin" ? <AdminPanel /> : <Navigate to="/" />
-            }
-          >
-            <Route index element={<Navigate to="turnos" />} />
-            <Route path="turnos" element={<AdminTurnos />} />
-            <Route path="ganancias" element={<AdminGanancias />} />
-            <Route path="servicios" element={<AdminServicios />} />
-            <Route path="usuarios" element={<AdminUsuarios />} />
-          </Route>
-
-          {/* BARBERO */}
-          <Route
-            path="/barbero"
-            element={
-              user?.rol === "barbero" ? (
-                <BarberoPanel userId={user!.id} />
-              ) : (
-                <Navigate to="/" />
-              )
+              <BarberiaProvider>
+                <RutasInternas user={user} setShowLogin={setShowLogin} />
+              </BarberiaProvider>
             }
           />
         </Routes>

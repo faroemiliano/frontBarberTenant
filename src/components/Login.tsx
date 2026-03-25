@@ -1,4 +1,5 @@
 import GoogleLoginButton from "./GoogleLoginButton";
+import { useBarberia } from "../../BarberiaContext";
 import bgLogin from "../assets/logoTitulo2.png";
 
 interface Props {
@@ -7,20 +8,21 @@ interface Props {
 }
 
 export default function Login({ onSuccess, onClose }: Props) {
+  const barberia = useBarberia();
+
   return (
     <div className="auth-modal">
       <div
         className="auth-modal-box"
         style={{ backgroundImage: `url(${bgLogin})` }}
       >
-        {/* ❌ BOTÓN CERRAR */}
         <button className="auth-close" onClick={onClose}>
           ×
         </button>
 
         <div className="auth-box">
           <p className="auth-subtitle">
-            Reservá tu turno en <strong>Barbería 1991</strong>
+            Reservá tu turno en <strong>{barberia?.nombre || "..."}</strong>
           </p>
 
           <GoogleLoginButton onSuccess={onSuccess} />

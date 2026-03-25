@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api";
+import { useParams } from "react-router-dom";
 
 interface Horario {
   id: number;
@@ -39,12 +40,18 @@ export default function Calendar({
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
 
+  const { barberia } = useParams();
   const DIAS_POR_PAGINA = 5;
 
   async function toggleHorario(h: Horario) {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+      const token = localStorage.getItem(`token_${barberia}`);
+      if (!token) {
+        console.log("❌ No hay token");
+        return;
+      }
+
+      console.log("🖱️ CLICK:", h.id, "estado actual:", h.disponible);
 
       const res = await apiFetch(
         mode === "admin"
@@ -52,27 +59,38 @@ export default function Calendar({
           : `/barbero/horarios/${h.id}/toggle`,
         {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            ...(barberia ? { "x-barberia": barberia } : {}),
+          },
         },
       );
 
-      if (!res.ok) throw new Error("Error al cambiar horario");
+      const data = await res.json();
 
-      const data: { disponible: boolean } = await res.json();
+      if (!res.ok) {
+        console.log("💥 ERROR BACK:", data);
+        alert(data.detail || "Error al cambiar horario");
+        return;
+      }
 
+      console.log("✅ RESPUESTA:", data);
+
+      // 🔥 UPDATE INSTANTÁNEO
       setHorarios((prev) =>
         prev.map((x) =>
           x.id === h.id ? { ...x, disponible: data.disponible } : x,
         ),
       );
-    } catch {
+    } catch (err) {
+      console.error("💥 ERROR:", err);
       alert("No se pudo cambiar el horario");
     }
   }
 
   useEffect(() => {
     async function cargarHorarios() {
-      if (mode !== "barbero" && !barberoId) {
+      if (mode === "user" && !barberoId) {
         setLoading(false);
         return;
       }
@@ -80,37 +98,58 @@ export default function Calendar({
       setLoading(true);
 
       try {
-        let token = localStorage.getItem("token");
+        let token = localStorage.getItem(`token_${barberia}`);
+
+        console.log("🧠 MODE:", mode);
+        console.log("🧠 BARBERO ID:", barberoId);
+        console.log("🧠 BARBERIA (slug):", barberia);
+        console.log("🧠 TOKEN:", token);
+
         let headers: Record<string, string> | undefined;
 
         if (token && (mode === "admin" || mode === "barbero")) {
-          headers = { Authorization: `Bearer ${token}` };
+          headers = {
+            Authorization: `Bearer ${token}`,
+            ...(barberia ? { "x-barberia": barberia } : {}),
+          };
         }
 
         let path = "";
 
         if (mode === "admin") {
-          path = `/admin/calendario-admin/${barberoId}`;
+          path = barberoId
+            ? `/admin/calendario-admin?barbero_id=${barberoId}`
+            : `/admin/calendario-admin`;
         } else if (mode === "barbero") {
           path = "/barbero/horarios";
         } else {
           path = `/calendario/${barberoId}`;
         }
 
+        console.log("🌐 PATH:", path);
+
         const res = await apiFetch(path, { headers });
-        if (!res.ok) throw new Error("Error cargando horarios");
+
+        console.log("📡 STATUS:", res.status);
 
         const data: Horario[] = await res.json();
+
+        console.log("📦 DATA:", data);
 
         if (!Array.isArray(data)) throw new Error("Datos inválidos");
 
         setHorarios(data);
 
         const uniqueDays = Array.from(new Set(data.map((h) => h.fecha))).sort();
+
+        console.log("📅 DIAS:", uniqueDays);
+
         setDias(uniqueDays);
 
         const hoy = todayISO();
         const indexHoy = uniqueDays.findIndex((d) => d >= hoy);
+
+        console.log("📍 indexHoy:", indexHoy);
 
         setPage(indexHoy !== -1 ? Math.floor(indexHoy / DIAS_POR_PAGINA) : 0);
 
@@ -118,23 +157,27 @@ export default function Calendar({
           indexHoy !== -1 ? uniqueDays[indexHoy] : (uniqueDays[0] ?? null),
         );
       } catch (err) {
-        console.error(err);
+        console.error("💥 ERROR:", err);
       } finally {
         setLoading(false);
       }
     }
 
     cargarHorarios();
-  }, [mode, barberoId]);
+  }, [mode, barberoId, barberia]);
 
   const inicio = page * DIAS_POR_PAGINA;
   const fin = inicio + DIAS_POR_PAGINA;
 
   const diasVisibles = dias.slice(inicio, fin);
 
-  const horariosDelDia = horarios.filter((h) => h.fecha === diaActivo);
+  const horariosVisibles = horarios.filter(
+    (h) => h.fecha === diaActivo && (mode !== "user" || h.disponible),
+  );
 
-  const hayDisponibles = horarios.some((h) => h.disponible);
+  const hayDisponibles = horarios.some(
+    (h) => h.disponible && (mode !== "user" || h.disponible),
+  );
 
   if (loading) return <p>Cargando horarios...</p>;
 
@@ -150,6 +193,12 @@ export default function Calendar({
       </div>
     );
   }
+
+  console.log("🎯 dias:", dias);
+  console.log("🎯 page:", page);
+  console.log("🎯 diasVisibles:", diasVisibles);
+  console.log("🎯 diaActivo:", diaActivo);
+  console.log("🎯 horarios:", horarios);
 
   return (
     <>
@@ -206,13 +255,13 @@ export default function Calendar({
 
       {diaActivo && (
         <>
-          {horariosDelDia.length === 0 ? (
+          {horariosVisibles.length === 0 ? (
             <p className="no-hours">
               No hay horarios disponibles para este día
             </p>
           ) : (
             <div className="hours-grid">
-              {horariosDelDia.map((h) => (
+              {horariosVisibles.map((h) => (
                 <button
                   key={`${h.id}-${h.hora}`}
                   className={`hour-card ${
