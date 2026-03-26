@@ -7,7 +7,11 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   const user = getUser();
   const pathSlug = window.location.pathname.split("/")[1];
 
-  const barberia = localStorage.getItem("barberia_slug") || pathSlug;
+  const isSuperAdminRoute = pathSlug === "superadmin";
+
+  const barberia = isSuperAdminRoute
+    ? null
+    : localStorage.getItem("barberia_slug") || pathSlug;
   console.log("🔥 BARBERIA EN FETCH:", barberia);
   // Headers extra seguros
   const extraHeaders: Record<string, string> =
@@ -24,7 +28,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     ...(token && { Authorization: `Bearer ${token}` }),
 
     // 🔥 SOLO si NO es superadmin
-    ...(barberia ? { "x-barberia": barberia } : {}),
+    ...(!isSuperAdmin && barberia ? { "x-barberia": barberia } : {}),
 
     ...extraHeaders,
   };
