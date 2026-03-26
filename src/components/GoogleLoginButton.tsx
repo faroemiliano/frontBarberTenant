@@ -1,7 +1,6 @@
 import { GoogleLogin } from "@react-oauth/google";
 import { saveSession } from "../auth";
 import { apiFetch } from "../api";
-const API = import.meta.env.VITE_API_URL; // 🔹 definir API
 
 export default function GoogleLoginButton({
   onSuccess,
