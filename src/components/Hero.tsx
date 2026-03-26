@@ -72,7 +72,7 @@ export default function Hero({ user, onLogin }: Props) {
         )}
       </div>
 
-      {/* MODALES */}
+      {/* MODALESs */}
       {openBooking && (
         <div className="modal-overlay">
           <div className="modal-content">
