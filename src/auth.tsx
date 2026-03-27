@@ -5,7 +5,7 @@ export function getSlug() {
   if (parts[0] === "superadmin") return "superadmin";
 
   // Home o barbería normal
-  return parts[0] || "default";
+  return parts[0] || null;
 }
 
 // 💾 TIPO DE USUARIO
@@ -42,8 +42,21 @@ export function saveSession(token: string, user: User) {
 
 // 🔑 OBTENER TOKEN
 export function getToken() {
-  const slug = getSlug();
-  return localStorage.getItem(`token_${slug}`);
+  const userSuper = localStorage.getItem("user_superadmin");
+
+  if (userSuper) {
+    return localStorage.getItem("token_superadmin");
+  }
+
+  const slug =
+    localStorage.getItem("barberia_slug") ||
+    window.location.pathname.split("/")[1];
+
+  if (slug) {
+    return localStorage.getItem(`token_${slug}`);
+  }
+
+  return null;
 }
 
 // 👤 OBTENER USUARIO
