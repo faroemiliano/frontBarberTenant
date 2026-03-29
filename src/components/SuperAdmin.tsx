@@ -8,6 +8,14 @@ interface Barberia {
   activo?: boolean;
 }
 
+function generarSlug(texto: string) {
+  return texto
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "");
+}
+
 export default function SuperAdminPanel() {
   const [barberias, setBarberias] = useState<Barberia[]>([]);
   const [nombre, setNombre] = useState("");
@@ -171,7 +179,11 @@ export default function SuperAdminPanel() {
         <input
           placeholder="Nombre de la barbería"
           value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setNombre(value);
+            setSlug(generarSlug(value)); // 🔥 AUTO
+          }}
           required
         />
         <input

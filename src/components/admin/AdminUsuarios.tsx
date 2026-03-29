@@ -13,12 +13,8 @@ export default function AdminUsuarios() {
   const [emailUsuario, setEmailUsuario] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  const token = localStorage.getItem("token");
-
   async function cargarUsuarios() {
-    const res = await apiFetch("/admin/usuarios", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch("/admin/usuarios");
 
     const data: Usuario[] = await res.json();
 
@@ -33,6 +29,28 @@ export default function AdminUsuarios() {
     );
   }
 
+  async function setBarbero() {
+    setMensaje("");
+
+    const res = await apiFetch(`/admin/set-barbero`, {
+      method: "POST",
+      body: JSON.stringify({
+        email: emailUsuario,
+        nombre: emailUsuario.split("@")[0],
+      }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      setMensaje(error.detail || "Error al crear barbero");
+      return;
+    }
+
+    setMensaje("Barbero creado / actualizado");
+    setEmailUsuario("");
+    cargarUsuarios();
+  }
+
   async function cambiarRol(rol: string) {
     setMensaje("");
 
@@ -45,10 +63,6 @@ export default function AdminUsuarios() {
 
     await apiFetch(`/admin/cambiar-rol/${usuario.id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify({ rol }),
     });
 
@@ -81,12 +95,7 @@ export default function AdminUsuarios() {
         />
 
         <div className="admin-barbero-actions">
-          <button
-            className="admin-btn-barbero"
-            onClick={() => cambiarRol("barbero")}
-          >
-            Convertir en barbero
-          </button>
+          <button onClick={setBarbero}>Agregar / convertir en barbero</button>
 
           <button
             className="admin-btn-cliente"
