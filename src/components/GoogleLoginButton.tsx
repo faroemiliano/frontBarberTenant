@@ -21,7 +21,7 @@ export default function GoogleLoginButton({
 
           // 🔥 VALIDACIÓN CLAVE
           if (!isSuperAdminRoute && !barberiaSlug) {
-            console.error("❌ No hay barberiaSlug en la URL");
+            console.error("❌ No hay barberiaSlug en la  URL");
             return;
           }
 
