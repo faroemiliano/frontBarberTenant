@@ -74,16 +74,13 @@ export default function BarberoPanel({}: Props) {
   };
 
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyLocal());
-  const token = getToken(); // toma el token del localStorage del slug actual
-  if (!token) {
-    console.error("❌ No hay token en localStorage");
-    return;
-  }
+  const token = getToken(); // token del localStorage
 
-  const { barberia } = useParams();
+  const { barberia } = useParams<{ barberia: string }>();
 
   const fetchPanel = async () => {
-    console.log("🔥 TOKEN:", token);
+    if (!token) return;
+
     try {
       const res = await apiFetch("/panel-barbero", {
         headers: {
@@ -100,7 +97,6 @@ export default function BarberoPanel({}: Props) {
 
       const json = await res.json();
 
-      // 🔒 fallback defensivo
       setData({
         turnos: json.turnos || [],
         dinero_diario: json.dinero_diario || 0,
@@ -116,7 +112,7 @@ export default function BarberoPanel({}: Props) {
 
   useEffect(() => {
     fetchPanel();
-  }, []);
+  }, [barberia]);
 
   const cancelarTurno = async (id: number) => {
     await apiFetch(`/barbero/turnos/${id}`, {
@@ -127,6 +123,7 @@ export default function BarberoPanel({}: Props) {
   };
 
   if (loading) return <div className="panel-loading">Cargando...</div>;
+
   const turnos = data?.turnos || [];
 
   const turnosFiltrados = turnos.filter((t) => {
@@ -277,6 +274,7 @@ export default function BarberoPanel({}: Props) {
             </button>
           </div>
 
+          {/* GRÁFICOS */}
           <div className="graficos-container">
             <div className="grafico-box">
               <h3>
@@ -329,6 +327,7 @@ export default function BarberoPanel({}: Props) {
         </>
       )}
 
+      {/* MODALES */}
       {calendarOpen && (
         <div className="modal-overlay">
           <div className="modal-box large">
@@ -440,6 +439,7 @@ export default function BarberoPanel({}: Props) {
             const payload: any = {};
 
             if (horario.id !== turnoEditando.horario_id) {
+              payload.horario_id = horario.id;
               payload.fecha = horario.fecha;
               payload.hora = horario.hora;
             }
@@ -453,6 +453,7 @@ export default function BarberoPanel({}: Props) {
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
+                ...(barberia ? { "x-barberia": barberia } : {}),
               },
               body: JSON.stringify(payload),
             });

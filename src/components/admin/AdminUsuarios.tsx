@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../api";
-import { getToken } from "../../auth";
 
 interface Usuario {
   id: number;
@@ -32,8 +31,7 @@ export default function AdminUsuarios() {
 
   async function setBarbero() {
     setMensaje("");
-    console.log("🔥 Token enviado:", getToken());
-    console.log("🔥 Barbería enviada:", localStorage.getItem("barberia_slug"));
+
     const res = await apiFetch(`/admin/set-barbero`, {
       method: "POST",
       body: JSON.stringify({

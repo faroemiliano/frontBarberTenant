@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api";
+import { getToken } from "../auth";
 
 interface Barberia {
   id: number;
@@ -24,7 +25,7 @@ export default function SuperAdminPanel() {
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token_superadmin");
+  const token = getToken();
 
   async function fetchBarberias() {
     if (!token) return;
@@ -83,12 +84,12 @@ export default function SuperAdminPanel() {
   }
 
   async function bloquearBarberia(id: number) {
+    if (!confirm("¿Seguro que querés bloquear esta barbería?")) return;
     try {
       const res = await apiFetch(`/superadmin/bloquear-barberia/${id}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!res.ok) throw new Error("Error al bloquear");
       fetchBarberias();
     } catch (err) {
@@ -97,6 +98,7 @@ export default function SuperAdminPanel() {
   }
 
   async function activarBarberia(id: number) {
+    if (!confirm("¿Seguro que querés activar esta barbería?")) return;
     try {
       const res = await apiFetch(`/superadmin/activar-barberia/${id}`, {
         method: "PUT",
@@ -217,7 +219,10 @@ export default function SuperAdminPanel() {
               )}
               <div style={{ marginTop: "5px" }}>
                 {/* 🔥 CONFIGURACIÓN */}
-                <button onClick={() => prepararServicios(b.id)}>
+                <button
+                  disabled={loading}
+                  onClick={() => prepararServicios(b.id)}
+                >
                   ✂️ Servicios
                 </button>
 
