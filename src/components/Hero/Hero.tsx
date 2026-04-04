@@ -6,7 +6,7 @@ import locationLogo from "../../assets/logos/logoUbi.png";
 import instagramLogo from "../../assets/logos/logoInsta.png";
 import whatsappLogo from "../../assets/logos/logoWhats.png";
 import { useBarberia } from "../../../BarberiaContext";
-import "./hero.css";
+import "./Hero.css";
 interface Props {
   user: any;
   onLogin: () => void;
