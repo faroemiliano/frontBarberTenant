@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { getToken } from "../../auth";
-import BookingModal from "../BookingModal";
-import Calendar from "../Calendar";
+import BookingModal from "../BookingModal/BookingModal";
+import Calendar from "../Calendar/Calendar";
 import { apiFetch } from "../../api";
 import { notifyGananciasUpdate } from "../../events/gananciasEvents";
 

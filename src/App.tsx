@@ -1,15 +1,15 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useParams } from "react-router-dom";
 
-import Navbar from "./components/Navbar";
-import Modal from "./components/Modal";
+import Navbar from "./components/Navbar/Navbar";
+import Modal from "./components/Modal/Modal";
 import { getUser, logout } from "./auth";
 
 // 🔥 Lazy loaded pages/components
-const Hero = lazy(() => import("./components/Hero"));
-const Login = lazy(() => import("./components/Login"));
-const CutsGallery = lazy(() => import("./components/CutsGallery"));
-const Footer = lazy(() => import("./components/Footer"));
+const Hero = lazy(() => import("./components/Hero/Hero"));
+const Login = lazy(() => import("./components/Login/Login"));
+const CutsGallery = lazy(() => import("./components/CutsGallery/CutsGallery"));
+const Footer = lazy(() => import("./components/Footer/Footer"));
 const SuperAdminPanel = lazy(() => import("./components/SuperAdmin"));
 const AdminPanel = lazy(() => import("./components/admin/AdminPanel"));
 const AdminTurnos = lazy(() => import("./components/admin/AdminTurnos"));
@@ -17,10 +17,11 @@ const AdminGanancias = lazy(() => import("./components/admin/AdminGanancias"));
 const AdminServicios = lazy(() => import("./components/admin/AdminServicios"));
 const BarberoPanel = lazy(() => import("./components/barbero/BarberoPanel"));
 const AdminUsuarios = lazy(() => import("./components/admin/AdminUsuarios"));
-const BookingUser = lazy(() => import("./components/BookingUser"));
+const BookingUser = lazy(() => import("./components/BookingUser/BookingUser"));
 import "./styles.css";
 import { BarberiaProvider } from "../BarberiaContext";
 import GoogleLoginButton from "./components/GoogleLoginButton";
+import "./components/Hero/Hero.css";
 
 function Loader() {
   return (
@@ -60,7 +61,9 @@ function RutasInternas({ user, setShowLogin }: any) {
           ) : (
             <>
               <Hero user={user} onLogin={() => setShowLogin(true)} />
+              <div className="hero-divider" />
               <CutsGallery />
+              <div className="hero-divider" />
               <Footer />
             </>
           )
@@ -104,6 +107,7 @@ function RutasInternas({ user, setShowLogin }: any) {
 export default function App() {
   const [user, setUser] = useState(getUser());
   const [showLogin, setShowLogin] = useState(false);
+  const { barberia } = useParams();
 
   /* 🔒 BLOQUEO SCROLL MODAL */
   useEffect(() => {
@@ -119,12 +123,6 @@ export default function App() {
   console.log("Usuario actual:", user);
   return (
     <>
-      <Navbar
-        user={user}
-        onLogin={() => setShowLogin(true)}
-        onLogout={handleLogout}
-      />
-      <div className="hero-divider" />
       <Suspense fallback={<Loader />}>
         <Routes>
           {/* RUTA SUPERADMIN */}
@@ -147,27 +145,33 @@ export default function App() {
             path="/:barberia/*"
             element={
               <BarberiaProvider>
+                <Navbar
+                  user={user}
+                  onLogin={() => setShowLogin(true)}
+                  onLogout={handleLogout}
+                  barberiaSlug={barberia}
+                />
+                <div className="hero-divider" />
                 <RutasInternas user={user} setShowLogin={setShowLogin} />
+                {/* ================= LOGIN MODAL ================= */}
+                {showLogin && (
+                  <Modal onClose={() => setShowLogin(false)}>
+                    <Suspense fallback={<Loader />}>
+                      <Login
+                        onSuccess={() => {
+                          setUser(getUser());
+                          setShowLogin(false);
+                        }}
+                        onClose={() => setShowLogin(false)}
+                      />
+                    </Suspense>
+                  </Modal>
+                )}
               </BarberiaProvider>
             }
           />
         </Routes>
       </Suspense>
-
-      {/* ================= LOGIN MODAL ================= */}
-      {showLogin && (
-        <Modal onClose={() => setShowLogin(false)}>
-          <Suspense fallback={<Loader />}>
-            <Login
-              onSuccess={() => {
-                setUser(getUser());
-                setShowLogin(false);
-              }}
-              onClose={() => setShowLogin(false)}
-            />
-          </Suspense>
-        </Modal>
-      )}
     </>
   );
 }

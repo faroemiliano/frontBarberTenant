@@ -7,8 +7,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import Calendar from "../Calendar";
-import BookingModal from "../BookingModal";
+import Calendar from "../Calendar/Calendar";
+import BookingModal from "../BookingModal/BookingModal";
 import { apiFetch } from "../../api";
 import { useParams } from "react-router-dom";
 import { getToken } from "../../auth";
@@ -167,9 +167,8 @@ export default function BarberoPanel({}: Props) {
 
   return (
     <div className="panel-container">
-      <div className="admin-card">
-        <h1 className="admin-title">Panel del Barbero</h1>
-
+      <h1 className="admin-title">Panel del Barbero</h1>
+      <div>
         <div className="admin-nav-buttons">
           <button className="btn-secondary" onClick={() => setVista("inicio")}>
             Inicio
@@ -275,53 +274,57 @@ export default function BarberoPanel({}: Props) {
           </div>
 
           {/* GRÁFICOS */}
-          <div className="graficos-container">
+          <div className="admin-card">
             <div className="grafico-box">
-              <h3>
-                {esHoy ? "Ganancia Hoy" : `Ganancia ${fechaSeleccionada}`}
-              </h3>
+              {/* GRAFICO DIA */}
+              <div className="grafico-item">
+                <h3>
+                  {esHoy ? "Ganancia Hoy" : `Ganancia ${fechaSeleccionada}`}
+                </h3>
 
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={graficoDia}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={85}
-                    onClick={() => setModalGraficoOpen(true)}
-                  >
-                    <Cell fill="#00c853" />
-                  </Pie>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={graficoDia}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={75}
+                      onClick={() => setModalGraficoOpen(true)}
+                    >
+                      <Cell fill="#00c853" />
+                    </Pie>
 
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
 
-            <div className="grafico-box">
-              <h3>Ganancia del Mes</h3>
+              {/* GRAFICO MES */}
+              <div className="grafico-item">
+                <h3>Ganancia del Mes</h3>
 
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={graficoMes}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={85}
-                    onClick={() => setModalMesOpen(true)}
-                  >
-                    <Cell fill="#2962ff" />
-                  </Pie>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={graficoMes}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={85}
+                      onClick={() => setModalMesOpen(true)}
+                    >
+                      <Cell fill="#2962ff" />
+                    </Pie>
 
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         </>

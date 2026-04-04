@@ -96,7 +96,6 @@ export default function AdminUsuarios() {
 
         <div className="admin-barbero-actions">
           <button onClick={setBarbero}>Agregar / convertir en barbero</button>
-
           <button
             className="admin-btn-cliente"
             onClick={() => cambiarRol("cliente")}

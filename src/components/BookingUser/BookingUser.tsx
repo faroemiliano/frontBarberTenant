@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import Calendar from "./Calendar";
-import { getToken } from "../auth";
-import { apiFetch } from "../api";
+import { getToken } from "../../auth";
+import { apiFetch } from "../../api";
 import { useParams } from "react-router-dom";
+import Calendar from "../Calendar/Calendar";
 
 interface HorarioSeleccionado {
   id: number;
@@ -206,7 +206,7 @@ export default function BookingUser({ onClose }: { onClose: () => void }) {
           <p>Te enviamos la confirmación a tu email 📩</p>
 
           <button
-            className="cta"
+            className="btn-secondary"
             onClick={() => {
               setSuccessOpen(false);
               onClose();

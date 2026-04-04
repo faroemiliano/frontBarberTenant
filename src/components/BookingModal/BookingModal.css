@@ -1,0 +1,188 @@
+/* ===================== OVERLAY ===================== */
+.booking-modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+
+  z-index: 1000;
+
+  animation: modalFadeIn 0.25s ease forwards;
+}
+
+/* ===================== BOX ===================== */
+.booking-modal-box {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+
+  background: #a2beff;
+
+  border-radius: 20px;
+  padding: 24px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  position: relative;
+  overflow-y: auto;
+
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+
+  animation: modalScaleIn 0.25s ease forwards;
+}
+
+/* ===================== CLOSE ===================== */
+.booking-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+
+  background: none;
+  border: none;
+
+  font-size: 22px;
+  font-weight: bold;
+
+  color: #111;
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.booking-modal-close:hover {
+  transform: scale(1.2);
+  color: #000;
+}
+
+/* ===================== TITLE ===================== */
+.booking-modal-box h2 {
+  text-align: center;
+  font-weight: 800;
+  color: #00376e;
+}
+
+/* ===================== SERVICES ===================== */
+.booking-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+/* CARD */
+.booking-service-card {
+  padding: 10px;
+  border-radius: 12px;
+
+  border: 1px solid #1e293b;
+  background: #020617;
+  color: #fff;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.booking-service-card:hover {
+  background: #1e293b;
+}
+
+/* ACTIVE */
+.booking-service-card.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* ===================== INPUTS ===================== */
+.booking-modal-box input {
+  width: 100%;
+  padding: 12px 14px;
+
+  border-radius: 10px;
+  border: 1px solid #334155;
+
+  background: #020617;
+  color: #fff;
+
+  font-size: 0.95rem;
+}
+
+.booking-modal-box input::placeholder {
+  color: #94a3b8;
+}
+
+.booking-modal-box input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* ===================== HORARIO ===================== */
+.booking-horario-resumen {
+  background: #020617;
+  color: #fff;
+
+  padding: 12px;
+  border-radius: 10px;
+
+  text-align: center;
+}
+
+/* ===================== BUTTONS ===================== */
+.booking-confirm {
+  padding: 12px;
+  border-radius: 12px;
+
+  border: none;
+  background: #16a34a;
+  color: white;
+
+  font-weight: bold;
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.booking-confirm:hover {
+  background: #22c55e;
+}
+
+.booking-confirm:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+}
+
+/* ===================== SCROLL ===================== */
+.booking-modal-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.booking-modal-box::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+}
+
+/* ===================== ANIMACIONES ===================== */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalScaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

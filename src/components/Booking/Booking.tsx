@@ -1,4 +1,4 @@
-import BookingUser from "./BookingUser";
+import BookingUser from "../BookingUser/BookingUser";
 
 interface Props {
   onClose: () => void;

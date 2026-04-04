@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import Calendar from "../Calendar";
+import Calendar from "../Calendar/Calendar";
 import { getUser } from "../../auth";
 
 export default function AdminPanel() {

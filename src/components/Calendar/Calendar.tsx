@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiFetch } from "../api";
+import { apiFetch } from "../../api";
 import { useParams } from "react-router-dom";
 
 interface Horario {

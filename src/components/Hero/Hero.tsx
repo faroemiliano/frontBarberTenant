@@ -1,13 +1,12 @@
 import { useState } from "react";
-import Booking from "./Booking";
-import MisTurnos from "./MisTurnos";
-import logoTitulo from "../assets/logoTitulo2.png";
-import locationLogo from "../assets/logos/logoUbi.png";
-import instagramLogo from "../assets/logos/logoInsta.png";
-import whatsappLogo from "../assets/logos/logoWhats.png";
-import fondo from "../assets/fondoPantalla.png";
-import { useBarberia } from "../../BarberiaContext";
-
+import Booking from "../Booking/Booking";
+import MisTurnos from "../MisTurnos/MisTurnos";
+import logoTitulo from "../../assets/logoTitulo2.png";
+import locationLogo from "../../assets/logos/logoUbi.png";
+import instagramLogo from "../../assets/logos/logoInsta.png";
+import whatsappLogo from "../../assets/logos/logoWhats.png";
+import { useBarberia } from "../../../BarberiaContext";
+import "./hero.css";
 interface Props {
   user: any;
   onLogin: () => void;
@@ -20,8 +19,18 @@ export default function Hero({ user, onLogin }: Props) {
   const barberia = useBarberia();
 
   return (
-    <section className="hero" style={{ backgroundImage: `url(${fondo})` }}>
-      <img src={logoTitulo} alt="Barbería 1991" className="hero-logo-bg" />
+    <section
+      className="hero"
+      style={{
+        backgroundImage: barberia?.fondo ? `url(${barberia.fondo})` : "none",
+        backgroundColor: barberia?.fondo_color || "#f5f5f5",
+      }}
+    >
+      <img
+        src={barberia?.logo_url || logoTitulo}
+        alt={barberia?.nombre || "Barbería"}
+        className="hero-logo-bg"
+      />
 
       <div className="hero-main">
         <p>
@@ -29,16 +38,15 @@ export default function Hero({ user, onLogin }: Props) {
         </p>
         {/* ICONOS */}
         <div className="hero-icons">
-          <a href="https://maps.app.goo.gl/cESJbAGczdZVZnL7A" target="_blank">
+          <a href={barberia?.ubicacion || "#"} target="_blank">
             <img src={locationLogo} />
           </a>
-          <a
-            href="https://www.instagram.com/1991.barberia?igsh=MXE3YzVwaTAyZ2l3Zw=="
-            target="_blank"
-          >
+
+          <a href={barberia?.instagram || "#"} target="_blank">
             <img src={instagramLogo} />
           </a>
-          <a href="https://wa.me/5491122384585" target="_blank">
+
+          <a href={barberia?.whatsapp || "#"} target="_blank">
             <img src={whatsappLogo} />
           </a>
         </div>

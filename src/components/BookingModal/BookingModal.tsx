@@ -1,6 +1,7 @@
-import Calendar from "./Calendar";
 import { useState, useEffect } from "react";
-import { apiFetch } from "../api";
+import { apiFetch } from "../../api";
+import Calendar from "../Calendar/Calendar";
+import "./BookingModal.css";
 
 interface HorarioSeleccionado {
   id: number;
@@ -95,20 +96,20 @@ export default function BookingModal({
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-box">
-        <button className="modal-close" onClick={onClose}>
+    <div className="booking-modal-overlay">
+      <div className="booking-modal-box">
+        <button className="booking-modal-close" onClick={onClose}>
           X
         </button>
 
         <h2>{modo === "editar" ? "Editar turno" : "Nuevo turno"}</h2>
 
-        <div className="services-grid">
+        <div className="booking-services-grid">
           {servicios.map((s) => (
             <button
               key={s.id}
               type="button"
-              className={`service-card ${servicio?.id === s.id ? "active" : ""}`}
+              className={`booking-service-card ${servicio?.id === s.id ? "active" : ""}`}
               onClick={() => {
                 setServicio(s);
                 setPrecio(s.precio);
@@ -139,7 +140,7 @@ export default function BookingModal({
 
         {horario && !editandoHorario && (
           <>
-            <div className="horario-resumen">
+            <div className="booking-horario-resumen">
               <p>
                 Fecha: {horario.fecha}
                 <br />
@@ -156,7 +157,7 @@ export default function BookingModal({
             </div>
 
             <button
-              className="confirm"
+              className="booking-confirm"
               disabled={loading}
               onClick={handleSubmit}
             >

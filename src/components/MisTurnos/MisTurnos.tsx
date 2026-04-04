@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getToken } from "../auth";
-import { apiFetch } from "../api";
+import { getToken } from "../../auth";
+import { apiFetch } from "../../api";
 
 interface Turno {
   id: number;

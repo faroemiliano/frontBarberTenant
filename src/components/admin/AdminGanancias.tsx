@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { getToken } from "../../auth";
 import { apiFetch } from "../../api";
+import "../../styles.css";
 
 /* =====================
    TIPOS
@@ -55,8 +56,8 @@ function ModalTotalMes({
   onClose: () => void;
 }) {
   return (
-    <div className="modal-overlay">
-      <div className="modal-box">
+    <div className="ganancias-modal-overlay">
+      <div className="ganancias-modal-box">
         <h3>Total del mes</h3>
 
         <p className="modal-total">${total.toLocaleString("es-AR")}</p>
@@ -98,51 +99,46 @@ function ModalDetalle({
   const total = data.reduce((acc, t) => acc + t.precio, 0);
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-box large">
-        <div className="modal-detalle">
-          <h3 className="modal-detalle-titulo">Detalle — {isoToDMY(fecha)}</h3>
+    <div className="ganancias-modal-overlay">
+      <div className="ganancias-modal-box">
+        <h3 className="modal-detalle-titulo">Detalle — {isoToDMY(fecha)}</h3>
 
-          {loading ? (
-            <p className="modal-detalle-loading">Cargando...</p>
-          ) : (
-            <>
-              <div className="modal-detalle-tabla-scroll">
-                <table className="modal-detalle-tabla">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>Servicio</th>
-                      <th className="precio">Precio</th>
+        {loading ? (
+          <p className="modal-detalle-loading">Cargando...</p>
+        ) : (
+          <>
+            <div className="modal-detalle-tabla-scroll">
+              <table className="modal-detalle-tabla">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Servicio</th>
+                    <th className="precio">Precio</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {data.map((t, i) => (
+                    <tr key={i}>
+                      <td>{t.nombre}</td>
+                      <td>{t.servicio}</td>
+                      <td className="precio">
+                        ${t.precio.toLocaleString("es-AR")}
+                      </td>
                     </tr>
-                  </thead>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                  <tbody>
-                    {data.map((t, i) => (
-                      <tr key={i}>
-                        <td>{t.nombre}</td>
-                        <td>{t.servicio}</td>
-                        <td className="precio">
-                          ${t.precio.toLocaleString("es-AR")}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="modal-detalle-total">
-                Total: ${total.toLocaleString("es-AR")}
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="modal-actions">
-          <button className="btn-secondary" onClick={onClose}>
-            Cerrar
-          </button>
-        </div>
+            <div className="modal-detalle-total">
+              Total: ${total.toLocaleString("es-AR")}
+            </div>
+          </>
+        )}
+        <button className="btn-secondary" onClick={onClose}>
+          Cerrar
+        </button>
       </div>
     </div>
   );

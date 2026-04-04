@@ -1,0 +1,106 @@
+.hero {
+  position: relative;
+  min-height: 100vh; /* mejor que height */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+/* overlay oscuro (recomendado agregar) */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.4); /* 👈 mejora legibilidad */
+  z-index: 0;
+}
+
+.hero-logo-bg {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: min(45vw, 40%);
+  height: auto;
+
+  opacity: 0.9;
+  filter: brightness(0.7) contrast(1.1);
+
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+.hero-main {
+  position: relative;
+  z-index: 2;
+  margin-top: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+
+  text-align: center;
+  padding: 20px;
+}
+
+.hero-main p {
+  font-size: clamp(2rem, 5vw, 1.5rem);
+  color: #000000;
+}
+
+/* ICONOS */
+.hero-icons {
+  display: flex;
+  gap: 20px;
+}
+
+.hero-icons img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.hero-icons a:hover img {
+  transform: scale(1.15);
+}
+
+/* LOGIN */
+.hero-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-login p {
+  color: #000000;
+  margin-bottom: 12px;
+}
+
+/* BOTONES */
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.hero-divider {
+  height: 2px;
+  width: min(720px, 80%);
+  margin: 0px auto;
+
+  background: linear-gradient(
+    to right,
+    rgba(240, 245, 245, 0),
+    #05938a,
+    rgba(240, 245, 245, 0)
+  );
+}
