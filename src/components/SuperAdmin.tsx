@@ -7,6 +7,27 @@ interface Barberia {
   nombre: string;
   slug: string;
   activo?: boolean;
+  // 🎨 visual
+  logo_url?: string;
+  color_primario?: string;
+  color_secundario?: string;
+  fondo_url?: string;
+  footer_texto?: string;
+
+  // 📱 contacto
+  instagram_url?: string;
+  whatsapp_url?: string;
+  ubicacion_url?: string;
+
+  // 📝 contenido
+  horarios_texto?: string;
+  galeria?: any[];
+
+  // 🎯 estilos avanzados
+  fondo_color?: string;
+  fondo_color_footer?: string;
+  fondo_color_videos?: string;
+  fondo_color_navbar?: string;
 }
 
 function generarSlug(texto: string) {
@@ -24,6 +45,9 @@ export default function SuperAdminPanel() {
   const [slug, setSlug] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editData, setEditData] = useState<Record<number, Partial<Barberia>>>(
+    {},
+  );
 
   const token = getToken();
 
@@ -166,6 +190,56 @@ export default function SuperAdminPanel() {
       alert("Error: " + err.message);
     }
   }
+  useEffect(() => {
+    if (barberias.length > 0) {
+      const initial: Record<number, any> = {};
+
+      barberias.forEach((b) => {
+        initial[b.id] = { ...b };
+      });
+
+      setEditData(initial);
+    }
+  }, [barberias]);
+
+  async function actualizarBarberia(id: number) {
+    if (!token) return;
+
+    try {
+      // 🔥 LIMPIAR DATA ANTES DE ENVIAR
+      const cleanData = Object.fromEntries(
+        Object.entries(editData[id]).filter(
+          ([key, value]) =>
+            value !== null &&
+            value !== "" &&
+            value !== undefined &&
+            key !== "id",
+        ),
+      );
+
+      console.log("📤 Enviando limpio:", cleanData);
+      console.log(":", editData[id]);
+
+      const res = await apiFetch(`/superadmin/actualizar-barberia/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(cleanData), // 👈 ACÁ USÁS cleanData
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.detail || "Error");
+
+      alert("Actualizado correctamente ✅");
+
+      fetchBarberias();
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
+  }
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -211,7 +285,159 @@ export default function SuperAdminPanel() {
         <ul>
           {barberias.map((b) => (
             <li key={b.id} style={{ marginBottom: "10px" }}>
-              <strong>{b.nombre}</strong> ({b.slug}){" "}
+              <div
+                style={{
+                  border: "1px solid #ccc",
+                  padding: "10px",
+                  marginBottom: "15px",
+                }}
+              >
+                <h4>ID: {b.id}</h4>
+
+                {/* 🧾 BASICO */}
+                <input
+                  placeholder="Nombre"
+                  value={editData[b.id]?.nombre ?? ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: { ...editData[b.id], nombre: e.target.value },
+                    })
+                  }
+                />
+
+                <input
+                  placeholder="Slug"
+                  value={editData[b.id]?.slug || ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: { ...editData[b.id], slug: e.target.value },
+                    })
+                  }
+                />
+
+                {/* 🎨 VISUAL */}
+                <input
+                  placeholder="Logo URL"
+                  value={editData[b.id]?.logo_url || ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: { ...editData[b.id], logo_url: e.target.value },
+                    })
+                  }
+                />
+
+                <input
+                  placeholder="Color primario"
+                  value={editData[b.id]?.color_primario || ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: {
+                        ...editData[b.id],
+                        color_primario: e.target.value,
+                      },
+                    })
+                  }
+                />
+
+                <input
+                  placeholder="Color secundario"
+                  value={editData[b.id]?.color_secundario || ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: {
+                        ...editData[b.id],
+                        color_secundario: e.target.value,
+                      },
+                    })
+                  }
+                />
+
+                {/* 📱 CONTACTO */}
+                <input
+                  placeholder="Instagram"
+                  value={editData[b.id]?.instagram_url || ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: {
+                        ...editData[b.id],
+                        instagram_url: e.target.value,
+                      },
+                    })
+                  }
+                />
+
+                <input
+                  placeholder="WhatsApp"
+                  value={editData[b.id]?.whatsapp_url || ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: {
+                        ...editData[b.id],
+                        whatsapp_url: e.target.value,
+                      },
+                    })
+                  }
+                />
+                <input
+                  placeholder="Ubicacion"
+                  value={editData[b.id]?.footer_texto || ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: {
+                        ...editData[b.id],
+                        footer_texto: e.target.value,
+                      },
+                    })
+                  }
+                />
+
+                {/* 📝 TEXTO */}
+                <textarea
+                  placeholder="Horarios"
+                  value={
+                    editData[b.id]?.horarios_texto ?? b.horarios_texto ?? ""
+                  }
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: {
+                        ...editData[b.id],
+                        horarios_texto: e.target.value,
+                      },
+                    })
+                  }
+                />
+
+                <textarea
+                  placeholder="Footer"
+                  value={editData[b.id]?.footer_texto ?? b.footer_texto ?? ""}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      [b.id]: {
+                        ...editData[b.id],
+                        footer_texto: e.target.value,
+                      },
+                    })
+                  }
+                />
+
+                {/* 🎯 BOTON GUARDAR */}
+                <button
+                  onClick={() => actualizarBarberia(b.id)}
+                  style={{ marginTop: "10px" }}
+                >
+                  💾 Guardar cambios
+                </button>
+              </div>
               {b.activo === false && (
                 <span style={{ color: "red", marginLeft: "10px" }}>
                   🔒 Bloqueada

@@ -9,12 +9,14 @@ export default function Footer() {
       <div className="footer-container">
         <div className="footer-col">
           <h4>Dirección</h4>
-          <p>{barberia.footer}</p>
+          <p>{barberia.footer_texto || "Sin información"}</p>
         </div>
 
         <div className="footer-col">
           <h4>Horarios</h4>
-          <pre style={{ margin: 0 }}>{barberia.horarios}</pre>
+          <div style={{ whiteSpace: "pre-line", margin: 0 }}>
+            {barberia.horarios_texto || "Sin horarios"}
+          </div>
         </div>
       </div>
 

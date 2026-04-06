@@ -38,7 +38,7 @@ export default function Hero({ user, onLogin }: Props) {
         </p>
         {/* ICONOS */}
         <div className="hero-icons">
-          <a href={barberia?.ubicacion || "#"} target="_blank">
+          <a href={barberia?.ubicacion_url || "#"} target="_blank">
             <img src={locationLogo} />
           </a>
 

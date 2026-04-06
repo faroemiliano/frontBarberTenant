@@ -20,10 +20,12 @@ interface Barberia {
   footer?: string;
   instagram?: string;
   whatsapp?: string;
-  ubicacion?: string;
+  ubicacion_url?: string;
   horarios?: string;
   galeria?: GaleriaItem[];
   fondo_color: string;
+  horarios_texto: string;
+  footer_texto: string;
 }
 
 const BarberiaContext = createContext<Barberia | null>(null);
