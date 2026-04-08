@@ -17,7 +17,7 @@ export default function Hero({ user, onLogin }: Props) {
   const [misTurnos, setMisTurnos] = useState(false);
 
   const barberia = useBarberia();
-
+  console.log("BARBERIA:", barberia);
   return (
     <section
       className="hero"
@@ -38,15 +38,37 @@ export default function Hero({ user, onLogin }: Props) {
         </p>
         {/* ICONOS */}
         <div className="hero-icons">
-          <a href={barberia?.ubicacion_url || "#"} target="_blank">
+          <a
+            href={
+              barberia?.ubicacion_url
+                ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    barberia.ubicacion_url,
+                  )}`
+                : "#"
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <img src={locationLogo} />
           </a>
 
-          <a href={barberia?.instagram || "#"} target="_blank">
+          <a
+            href={barberia?.instagram_url || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <img src={instagramLogo} />
           </a>
 
-          <a href={barberia?.whatsapp || "#"} target="_blank">
+          <a
+            href={
+              barberia?.whatsapp_url
+                ? `https://wa.me/${barberia.whatsapp_url.replace(/\D/g, "")}`
+                : "#"
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <img src={whatsappLogo} />
           </a>
         </div>

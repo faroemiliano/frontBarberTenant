@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="footer-container">
         <div className="footer-col">
           <h4>Dirección</h4>
-          <p>{barberia.footer_texto || "Sin información"}</p>
+          <p>{barberia.direccion || "Sin información"}</p>
         </div>
 
         <div className="footer-col">

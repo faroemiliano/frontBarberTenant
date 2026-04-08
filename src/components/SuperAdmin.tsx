@@ -13,6 +13,7 @@ interface Barberia {
   color_secundario?: string;
   fondo_url?: string;
   footer_texto?: string;
+  direccion?: string;
 
   // 📱 contacto
   instagram_url?: string;
@@ -386,14 +387,15 @@ export default function SuperAdminPanel() {
                   }
                 />
                 <input
-                  placeholder="Ubicacion"
-                  value={editData[b.id]?.footer_texto || ""}
+                  type="url"
+                  placeholder="Link de Google Maps (https://...)"
+                  value={editData[b.id]?.ubicacion_url || ""}
                   onChange={(e) =>
                     setEditData({
                       ...editData,
                       [b.id]: {
                         ...editData[b.id],
-                        footer_texto: e.target.value,
+                        ubicacion_url: e.target.value,
                       },
                     })
                   }
@@ -417,14 +419,14 @@ export default function SuperAdminPanel() {
                 />
 
                 <textarea
-                  placeholder="Footer"
-                  value={editData[b.id]?.footer_texto ?? b.footer_texto ?? ""}
+                  placeholder="Direccion"
+                  value={editData[b.id]?.direccion ?? b.direccion ?? ""}
                   onChange={(e) =>
                     setEditData({
                       ...editData,
                       [b.id]: {
                         ...editData[b.id],
-                        footer_texto: e.target.value,
+                        direccion: e.target.value,
                       },
                     })
                   }

@@ -17,9 +17,9 @@ interface Barberia {
   color_primario?: string;
   color_secundario?: string;
   fondo?: string;
-  footer?: string;
-  instagram?: string;
-  whatsapp?: string;
+  direccion?: string;
+  instagram_url?: string;
+  whatsapp_url?: string;
   ubicacion_url?: string;
   horarios?: string;
   galeria?: GaleriaItem[];
