@@ -430,8 +430,8 @@ section {
 
   padding: 40px 32px;
   border-radius: 28px;
-
-  background-size: cover;
+  background-repeat: no-repeat;
+  background-size: contain;
   background-position: center;
   display: flex;
   align-items: center;
