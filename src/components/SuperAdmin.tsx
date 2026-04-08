@@ -207,19 +207,11 @@ export default function SuperAdminPanel() {
     if (!token) return;
 
     try {
-      // 🔥 LIMPIAR DATA ANTES DE ENVIAR
-      const cleanData = Object.fromEntries(
-        Object.entries(editData[id]).filter(
-          ([key, value]) =>
-            value !== null &&
-            value !== "" &&
-            value !== undefined &&
-            key !== "id",
-        ),
-      );
+      // 🔥 ENVIAMOS TODOS LOS CAMPOS, INCLUYENDO VACÍOS
+      const dataToSend = { ...editData[id] };
+      delete dataToSend.id; // quitamos solo el ID
 
-      console.log("📤 Enviando limpio:", cleanData);
-      console.log(":", editData[id]);
+      console.log("📤 Enviando data completa:", dataToSend);
 
       const res = await apiFetch(`/superadmin/actualizar-barberia/${id}`, {
         method: "PUT",
@@ -227,16 +219,16 @@ export default function SuperAdminPanel() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(cleanData), // 👈 ACÁ USÁS cleanData
+        body: JSON.stringify(dataToSend),
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.detail || "Error");
+      if (!res.ok) throw new Error(data.detail || "Error al actualizar");
 
       alert("Actualizado correctamente ✅");
 
-      fetchBarberias();
+      fetchBarberias(); // refresca la lista
     } catch (err: any) {
       alert("Error: " + err.message);
     }

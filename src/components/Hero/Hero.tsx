@@ -39,13 +39,7 @@ export default function Hero({ user, onLogin }: Props) {
         {/* ICONOS */}
         <div className="hero-icons">
           <a
-            href={
-              barberia?.ubicacion_url
-                ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    barberia.ubicacion_url,
-                  )}`
-                : "#"
-            }
+            href={barberia?.ubicacion_url || "#"}
             target="_blank"
             rel="noopener noreferrer"
           >
