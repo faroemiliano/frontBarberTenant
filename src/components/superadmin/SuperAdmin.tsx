@@ -400,7 +400,7 @@ export default function SuperAdminPanel() {
                     ...editData,
                     [b.id]: {
                       ...editData[b.id],
-                      whatsapp_url: e.target.value,
+                      whatsapp_url: e.target.value.replace(/\D/g, ""),
                     },
                   })
                 }
