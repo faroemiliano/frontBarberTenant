@@ -1,0 +1,194 @@
+/* =========================
+   PANEL BASE
+========================= */
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f6f8;
+}
+
+.superadmin-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+h2,
+h3 {
+  color: #111;
+  margin-bottom: 1rem;
+}
+
+/* =========================
+   FORM CREAR BARBERIA
+========================= */
+.form-create {
+  background: white;
+  padding: 14px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+
+  max-width: 420px;
+  margin-bottom: 1.5rem;
+}
+
+.form-create h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.form-create input {
+  padding: 8px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.form-create button {
+  padding: 10px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+/* =========================
+   LISTA BARBERIAS
+========================= */
+.barberia-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+/* =========================
+   CARD COMPACTA
+========================= */
+.barberia-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  transition: 0.2s;
+  font-size: 13px;
+}
+
+.barberia-card:hover {
+  transform: translateY(-2px);
+}
+
+/* TITULO PEQUEÑO */
+.barberia-card h4 {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+/* =========================
+   INPUTS COMPACTOS
+========================= */
+.barberia-card input,
+.barberia-card textarea {
+  width: 100%;
+  margin-top: 5px;
+  margin-bottom: 8px;
+
+  padding: 7px 8px;
+  font-size: 12px;
+
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  outline: none;
+}
+
+.barberia-card textarea {
+  min-height: 50px;
+  resize: none;
+}
+
+/* focus más suave */
+.barberia-card input:focus,
+.barberia-card textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.barberia-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  transition: 0.2s;
+
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.barberia-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================
+   BOTONES COMPACTOS
+========================= */
+.btn {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+
+  font-size: 11px;
+  margin-right: 4px;
+  margin-top: 4px;
+
+  transition: 0.2s;
+}
+
+/* estilos base */
+.btn-save {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-save:hover {
+  background: #16a34a;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #b45309;
+}
+
+/* =========================
+   BADGE BLOQUEADA
+========================= */
+.badge-blocked {
+  display: inline-block;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  margin-top: 6px;
+}

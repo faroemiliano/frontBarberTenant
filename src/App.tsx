@@ -10,7 +10,9 @@ const Hero = lazy(() => import("./components/Hero/Hero"));
 const Login = lazy(() => import("./components/Login/Login"));
 const CutsGallery = lazy(() => import("./components/CutsGallery/CutsGallery"));
 const Footer = lazy(() => import("./components/Footer/Footer"));
-const SuperAdminPanel = lazy(() => import("./components/SuperAdmin"));
+const SuperAdminPanel = lazy(
+  () => import("./components/superadmin/SuperAdmin"),
+);
 const AdminPanel = lazy(() => import("./components/admin/AdminPanel"));
 const AdminTurnos = lazy(() => import("./components/admin/AdminTurnos"));
 const AdminGanancias = lazy(() => import("./components/admin/AdminGanancias"));

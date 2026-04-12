@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { apiFetch } from "../api";
-import { getToken } from "../auth";
+import { apiFetch } from "../../api";
+import { getToken } from "../../auth";
+import "./SuperAdmin.css";
 
 interface Barberia {
   id: number;
@@ -49,6 +50,8 @@ export default function SuperAdminPanel() {
   const [editData, setEditData] = useState<Record<number, Partial<Barberia>>>(
     {},
   );
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 2;
 
   const token = getToken();
 
@@ -233,239 +236,268 @@ export default function SuperAdminPanel() {
       alert("Error: " + err.message);
     }
   }
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
 
+  const barberiasPaginated = barberias.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(barberias.length / itemsPerPage);
   return (
-    <div style={{ padding: "2rem" }}>
+    <div className="superadmin-container">
       <h2>Panel de SuperAdmin</h2>
 
-      <form onSubmit={crearBarberia} style={{ marginBottom: "2rem" }}>
+      {/* =========================
+        CREAR BARBERÍA
+    ========================= */}
+      <form onSubmit={crearBarberia} className="form-create">
         <h3>Crear nueva barbería</h3>
+
         <input
           placeholder="Nombre del Admin"
           value={nombreAdmin}
           onChange={(e) => setNombreAdmin(e.target.value)}
           required
         />
+
         <input
           placeholder="Nombre de la barbería"
           value={nombre}
           onChange={(e) => {
             const value = e.target.value;
             setNombre(value);
-            setSlug(generarSlug(value)); // 🔥 AUTO
+            setSlug(generarSlug(value));
           }}
           required
         />
+
         <input
           placeholder="Slug"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
           required
         />
+
         <input
           placeholder="Email del admin"
           value={adminEmail}
           onChange={(e) => setAdminEmail(e.target.value)}
           required
         />
+
         <button type="submit">Crear barbería</button>
       </form>
 
+      {/* =========================
+        LISTADO
+    ========================= */}
       <h3>Barberías existentes</h3>
+
       {loading ? (
         <p>Cargando...</p>
       ) : barberias.length > 0 ? (
-        <ul>
-          {barberias.map((b) => (
-            <li key={b.id} style={{ marginBottom: "10px" }}>
-              <div
-                style={{
-                  border: "1px solid #ccc",
-                  padding: "10px",
-                  marginBottom: "15px",
-                }}
+        <ul className="barberia-list">
+          {barberiasPaginated.map((b) => (
+            <li key={b.id} className="barberia-card">
+              <h4>ID: {b.id}</h4>
+
+              {/* =========================
+                INPUTS BÁSICOS
+            ========================= */}
+              <input
+                placeholder="Nombre"
+                value={editData[b.id]?.nombre ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      nombre: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              <input
+                placeholder="Slug"
+                value={editData[b.id]?.slug ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      slug: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              {/* =========================
+                VISUAL
+            ========================= */}
+              <input
+                placeholder="Logo URL"
+                value={editData[b.id]?.logo_url ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      logo_url: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              <input
+                placeholder="Color primario"
+                value={editData[b.id]?.color_primario ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      color_primario: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              <input
+                placeholder="Color secundario"
+                value={editData[b.id]?.color_secundario ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      color_secundario: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              {/* =========================
+                CONTACTO
+            ========================= */}
+              <input
+                placeholder="Instagram"
+                value={editData[b.id]?.instagram_url ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      instagram_url: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              <input
+                placeholder="WhatsApp"
+                value={editData[b.id]?.whatsapp_url ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      whatsapp_url: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              <input
+                type="url"
+                placeholder="Google Maps URL"
+                value={editData[b.id]?.ubicacion_url ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      ubicacion_url: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              {/* =========================
+                TEXTOS
+            ========================= */}
+              <textarea
+                placeholder="Horarios"
+                value={editData[b.id]?.horarios_texto ?? b.horarios_texto ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      horarios_texto: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              <textarea
+                placeholder="Dirección"
+                value={editData[b.id]?.direccion ?? b.direccion ?? ""}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      direccion: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              {/* =========================
+                ACCIONES
+            ========================= */}
+              <button
+                className="btn btn-save"
+                onClick={() => actualizarBarberia(b.id)}
               >
-                <h4>ID: {b.id}</h4>
+                💾 Guardar
+              </button>
 
-                {/* 🧾 BASICO */}
-                <input
-                  placeholder="Nombre"
-                  value={editData[b.id]?.nombre ?? ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: { ...editData[b.id], nombre: e.target.value },
-                    })
-                  }
-                />
-
-                <input
-                  placeholder="Slug"
-                  value={editData[b.id]?.slug || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: { ...editData[b.id], slug: e.target.value },
-                    })
-                  }
-                />
-
-                {/* 🎨 VISUAL */}
-                <input
-                  placeholder="Logo URL"
-                  value={editData[b.id]?.logo_url || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: { ...editData[b.id], logo_url: e.target.value },
-                    })
-                  }
-                />
-
-                <input
-                  placeholder="Color primario"
-                  value={editData[b.id]?.color_primario || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: {
-                        ...editData[b.id],
-                        color_primario: e.target.value,
-                      },
-                    })
-                  }
-                />
-
-                <input
-                  placeholder="Color secundario"
-                  value={editData[b.id]?.color_secundario || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: {
-                        ...editData[b.id],
-                        color_secundario: e.target.value,
-                      },
-                    })
-                  }
-                />
-
-                {/* 📱 CONTACTO */}
-                <input
-                  placeholder="Instagram"
-                  value={editData[b.id]?.instagram_url || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: {
-                        ...editData[b.id],
-                        instagram_url: e.target.value,
-                      },
-                    })
-                  }
-                />
-
-                <input
-                  placeholder="WhatsApp"
-                  value={editData[b.id]?.whatsapp_url || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: {
-                        ...editData[b.id],
-                        whatsapp_url: e.target.value,
-                      },
-                    })
-                  }
-                />
-                <input
-                  type="url"
-                  placeholder="Link de Google Maps (https://...)"
-                  value={editData[b.id]?.ubicacion_url || ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: {
-                        ...editData[b.id],
-                        ubicacion_url: e.target.value,
-                      },
-                    })
-                  }
-                />
-
-                {/* 📝 TEXTO */}
-                <textarea
-                  placeholder="Horarios"
-                  value={
-                    editData[b.id]?.horarios_texto ?? b.horarios_texto ?? ""
-                  }
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: {
-                        ...editData[b.id],
-                        horarios_texto: e.target.value,
-                      },
-                    })
-                  }
-                />
-
-                <textarea
-                  placeholder="Direccion"
-                  value={editData[b.id]?.direccion ?? b.direccion ?? ""}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      [b.id]: {
-                        ...editData[b.id],
-                        direccion: e.target.value,
-                      },
-                    })
-                  }
-                />
-
-                {/* 🎯 BOTON GUARDAR */}
-                <button
-                  onClick={() => actualizarBarberia(b.id)}
-                  style={{ marginTop: "10px" }}
-                >
-                  💾 Guardar cambios
-                </button>
-              </div>
               {b.activo === false && (
-                <span style={{ color: "red", marginLeft: "10px" }}>
-                  🔒 Bloqueada
-                </span>
+                <span className="badge-blocked">🔒 Bloqueada</span>
               )}
-              <div style={{ marginTop: "5px" }}>
-                {/* 🔥 CONFIGURACIÓN */}
+
+              <div style={{ marginTop: "10px" }}>
                 <button
-                  disabled={loading}
+                  className="btn btn-primary"
                   onClick={() => prepararServicios(b.id)}
                 >
                   ✂️ Servicios
                 </button>
 
                 <button
+                  className="btn btn-primary"
                   onClick={() => prepararCalendario(b.id)}
-                  style={{ marginLeft: "5px" }}
                 >
                   📅 Horarios
                 </button>
 
-                {/* 🔒 CONTROL */}
                 <button
+                  className="btn btn-warning"
                   onClick={() => bloquearBarberia(b.id)}
-                  style={{ marginLeft: "10px" }}
                 >
                   Bloquear
                 </button>
 
-                <button onClick={() => activarBarberia(b.id)}>Activar</button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => activarBarberia(b.id)}
+                >
+                  Activar
+                </button>
 
                 <button
+                  className="btn btn-danger"
                   onClick={() => eliminarBarberia(b.id)}
-                  style={{ color: "red" }}
                 >
                   Eliminar
                 </button>
@@ -476,6 +508,35 @@ export default function SuperAdminPanel() {
       ) : (
         <p>No hay barberías creadas aún.</p>
       )}
+      <div
+        style={{
+          marginTop: "20px",
+          display: "flex",
+          gap: "10px",
+          alignContent: "center",
+          justifyContent: "center",
+        }}
+      >
+        <button
+          className="btn btn-primary"
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+        >
+          ⬅ Anterior
+        </button>
+
+        <span style={{ fontSize: "12px" }}>
+          Página {page} de {totalPages}
+        </span>
+
+        <button
+          className="btn btn-primary"
+          disabled={page === totalPages}
+          onClick={() => setPage(page + 1)}
+        >
+          Siguiente ➡
+        </button>
+      </div>
     </div>
   );
 }
