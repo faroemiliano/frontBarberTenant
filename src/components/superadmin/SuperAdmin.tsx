@@ -16,6 +16,8 @@ interface Barberia {
   footer_texto?: string;
   direccion?: string;
 
+  horario_config?: any;
+  duracion?: number;
   // 📱 contacto
   instagram_url?: string;
   whatsapp_url?: string;
@@ -50,11 +52,21 @@ export default function SuperAdminPanel() {
   const [editData, setEditData] = useState<Record<number, Partial<Barberia>>>(
     {},
   );
+  const [horarioTexto, setHorarioTexto] = useState<Record<number, string>>({});
   const [page, setPage] = useState(1);
   const itemsPerPage = 2;
 
   const token = getToken();
 
+  const dias = [
+    "lunes",
+    "martes",
+    "miercoles",
+    "jueves",
+    "viernes",
+    "sabado",
+    "domingo",
+  ];
   async function fetchBarberias() {
     if (!token) return;
     setLoading(true);
@@ -199,7 +211,10 @@ export default function SuperAdminPanel() {
       const initial: Record<number, any> = {};
 
       barberias.forEach((b) => {
-        initial[b.id] = { ...b };
+        initial[b.id] = {
+          ...b,
+          horario_config: b.horario_config || {}, // 🔥 clave
+        };
       });
 
       setEditData(initial);
@@ -207,11 +222,15 @@ export default function SuperAdminPanel() {
   }, [barberias]);
 
   async function actualizarBarberia(id: number) {
+    console.log("🔥 CONFIG FINAL:", editData[id]?.horario_config);
     if (!token) return;
 
     try {
       // 🔥 ENVIAMOS TODOS LOS CAMPOS, INCLUYENDO VACÍOS
-      const dataToSend = { ...editData[id] };
+      const dataToSend = {
+        ...editData[id],
+        horario_config: editData[id]?.horario_config || {},
+      };
       delete dataToSend.id; // quitamos solo el ID
 
       console.log("📤 Enviando data completa:", dataToSend);
@@ -229,9 +248,11 @@ export default function SuperAdminPanel() {
 
       if (!res.ok) throw new Error(data.detail || "Error al actualizar");
 
-      alert("Actualizado correctamente ✅");
+      alert("Guardado ✅ Generando horarios...");
 
-      fetchBarberias(); // refresca la lista
+      await prepararCalendario(id);
+
+      fetchBarberias();
     } catch (err: any) {
       alert("Error: " + err.message);
     }
@@ -241,6 +262,7 @@ export default function SuperAdminPanel() {
 
   const barberiasPaginated = barberias.slice(startIndex, endIndex);
   const totalPages = Math.ceil(barberias.length / itemsPerPage);
+
   return (
     <div className="superadmin-container">
       <h2>Panel de SuperAdmin</h2>
@@ -451,6 +473,213 @@ export default function SuperAdminPanel() {
                   })
                 }
               />
+              {/* =========================
+   CONFIG AVANZADA
+========================= */}
+
+              <label style={{ fontSize: "12px", marginTop: "10px" }}>
+                ⏱ Duración turno (min)
+              </label>
+
+              <input
+                type="number"
+                placeholder="30"
+                value={editData[b.id]?.duracion ?? 30}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    [b.id]: {
+                      ...editData[b.id],
+                      duracion: Number(e.target.value),
+                    },
+                  })
+                }
+              />
+
+              {/* =========================
+   HORARIOS VISUALES
+========================= */}
+
+              <h4 style={{ marginTop: "10px" }}>📅 Horarios</h4>
+
+              {dias.map((dia) => {
+                const config = editData[b.id]?.horario_config || {};
+                const invalid = Object.values(config).some((franjas: any) =>
+                  franjas.some((f: any) => f[0] >= f[1]),
+                );
+
+                if (invalid) {
+                  alert("Horario inválido (inicio >= fin)");
+                  return;
+                }
+                const franjas: number[][] = config[dia] || [];
+
+                return (
+                  <div
+                    key={dia}
+                    style={{
+                      border: "1px solid #333",
+                      padding: "10px",
+                      marginTop: "10px",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <strong>{dia.toUpperCase()}</strong>
+
+                      {/* ACTIVAR / DESACTIVAR DÍA */}
+                      <input
+                        type="checkbox"
+                        checked={franjas.length > 0}
+                        onChange={() => {
+                          const newConfig = {
+                            ...(editData[b.id]?.horario_config || {}),
+                          };
+
+                          if (franjas.length > 0) {
+                            delete newConfig[dia]; // 🔥 cerrar día
+                          } else {
+                            newConfig[dia] = [[10, 18]]; // 🔥 abrir con default
+                          }
+
+                          setEditData({
+                            ...editData,
+                            [b.id]: {
+                              ...editData[b.id],
+                              horario_config: newConfig,
+                            },
+                          });
+                        }}
+                      />
+                    </div>
+
+                    {/* SI NO ESTÁ ACTIVO */}
+                    {franjas.length === 0 && (
+                      <p style={{ fontSize: "12px", opacity: 0.6 }}>Cerrado</p>
+                    )}
+
+                    {/* LISTA DE FRANJAS */}
+                    {franjas.map((franja: number[], index: number) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          marginTop: "6px",
+                          alignItems: "center",
+                        }}
+                      >
+                        {/* DESDE */}
+                        <select
+                          value={franja[0]}
+                          onChange={(e) => {
+                            const newFranjas = franjas.map((f, i) =>
+                              i === index ? [Number(e.target.value), f[1]] : f,
+                            );
+
+                            setEditData({
+                              ...editData,
+                              [b.id]: {
+                                ...editData[b.id],
+                                horario_config: {
+                                  ...(editData[b.id]?.horario_config || {}),
+                                  [dia]: newFranjas,
+                                },
+                              },
+                            });
+                          }}
+                        >
+                          {[...Array(24)].map((_, h) => (
+                            <option key={h} value={h}>
+                              {h.toString().padStart(2, "0")}:00
+                            </option>
+                          ))}
+                        </select>
+
+                        <span>a</span>
+
+                        {/* HASTA */}
+                        <select
+                          value={franja[1]}
+                          onChange={(e) => {
+                            const newFranjas = franjas.map((f, i) =>
+                              i === index ? [f[0], Number(e.target.value)] : f,
+                            );
+
+                            setEditData({
+                              ...editData,
+                              [b.id]: {
+                                ...editData[b.id],
+                                horario_config: {
+                                  ...editData[b.id]?.horario_config,
+                                  [dia]: newFranjas,
+                                },
+                              },
+                            });
+                          }}
+                        >
+                          {[...Array(24)].map((_, h) => (
+                            <option key={h} value={h}>
+                              {h.toString().padStart(2, "0")}:00
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* ELIMINAR */}
+                        <button
+                          onClick={() => {
+                            const newFranjas = franjas.filter(
+                              (_, i) => i !== index,
+                            );
+
+                            setEditData({
+                              ...editData,
+                              [b.id]: {
+                                ...editData[b.id],
+                                horario_config: {
+                                  ...editData[b.id]?.horario_config,
+                                  [dia]: newFranjas,
+                                },
+                              },
+                            });
+                          }}
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* AGREGAR FRANJA */}
+                    {franjas.length > 0 && (
+                      <button
+                        type="button"
+                        style={{ marginTop: "6px" }}
+                        onClick={() => {
+                          const newFranjas = [...franjas, [10, 18]];
+
+                          setEditData({
+                            ...editData,
+                            [b.id]: {
+                              ...editData[b.id],
+                              horario_config: {
+                                ...editData[b.id]?.horario_config,
+                                [dia]: newFranjas,
+                              },
+                            },
+                          });
+                        }}
+                      >
+                        ➕ Agregar franja
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
 
               {/* =========================
                 ACCIONES
@@ -498,6 +727,7 @@ export default function SuperAdminPanel() {
                 <button
                   className="btn btn-danger"
                   onClick={() => eliminarBarberia(b.id)}
+                  type="button"
                 >
                   Eliminar
                 </button>
