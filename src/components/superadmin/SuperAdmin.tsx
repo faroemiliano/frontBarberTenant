@@ -52,7 +52,6 @@ export default function SuperAdminPanel() {
   const [editData, setEditData] = useState<Record<number, Partial<Barberia>>>(
     {},
   );
-  const [horarioTexto, setHorarioTexto] = useState<Record<number, string>>({});
   const [page, setPage] = useState(1);
   const itemsPerPage = 2;
 
