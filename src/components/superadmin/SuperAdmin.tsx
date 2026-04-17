@@ -49,6 +49,8 @@ export default function SuperAdminPanel() {
   const [slug, setSlug] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [servicios, setServicios] = useState<Record<number, any[]>>({});
+  const [nuevoServicio, setNuevoServicio] = useState<Record<number, any>>({});
   const [editData, setEditData] = useState<Record<number, Partial<Barberia>>>(
     {},
   );
@@ -167,25 +169,25 @@ export default function SuperAdminPanel() {
     }
   }
 
-  async function prepararServicios(barberiaId: number) {
-    try {
-      const res = await apiFetch("/preparar-servicios", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ barberia_id: barberiaId }),
-      });
+  // async function prepararServicios(barberiaId: number) {
+  //   try {
+  //     const res = await apiFetch("/preparar-servicios", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify({ barberia_id: barberiaId }),
+  //     });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Error");
+  //     const data = await res.json();
+  //     if (!res.ok) throw new Error(data.detail || "Error");
 
-      alert("Servicios creados ✂️");
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    }
-  }
+  //     alert("Servicios creados ✂️");
+  //   } catch (err: any) {
+  //     alert("Error: " + err.message);
+  //   }
+  // }
   async function prepararCalendario(barberiaId: number) {
     try {
       const res = await apiFetch("/preparar-calendario", {
@@ -249,8 +251,6 @@ export default function SuperAdminPanel() {
 
       alert("Guardado ✅ Generando horarios...");
 
-      await prepararCalendario(id);
-
       fetchBarberias();
     } catch (err: any) {
       alert("Error: " + err.message);
@@ -261,6 +261,80 @@ export default function SuperAdminPanel() {
 
   const barberiasPaginated = barberias.slice(startIndex, endIndex);
   const totalPages = Math.ceil(barberias.length / itemsPerPage);
+
+  async function fetchServicios(barberiaId: number) {
+    try {
+      const res = await apiFetch("/admin/servicios", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-barberia": barberias.find((b) => b.id === barberiaId)?.slug || "",
+        },
+      });
+
+      const data = await res.json();
+
+      setServicios((prev) => ({
+        ...prev,
+        [barberiaId]: data,
+      }));
+    } catch (err) {
+      console.error("Error servicios", err);
+    }
+  }
+
+  async function crearServicio(barberiaId: number) {
+    const s = nuevoServicio[barberiaId];
+
+    if (!s?.nombre || !s?.precio) {
+      alert("Completar datos");
+      return;
+    }
+
+    try {
+      const res = await apiFetch("/admin/servicios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-barberia": barberias.find((b) => b.id === barberiaId)?.slug || "",
+        },
+        body: JSON.stringify(s),
+      });
+
+      if (!res.ok) throw new Error("Error");
+
+      setNuevoServicio((prev) => ({
+        ...prev,
+        [barberiaId]: {},
+      }));
+
+      fetchServicios(barberiaId);
+    } catch (err) {
+      alert("Error creando servicio");
+    }
+  }
+
+  async function actualizarServicio(
+    barberiaId: number,
+    servicioId: number,
+    data: any,
+  ) {
+    try {
+      await apiFetch(`/admin/servicios/${servicioId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-barberia": barberias.find((b) => b.id === barberiaId)?.slug || "",
+        },
+        body: JSON.stringify(data),
+      });
+
+      fetchServicios(barberiaId);
+    } catch {
+      alert("Error actualizando");
+    }
+  }
 
   return (
     <div className="superadmin-container">
@@ -696,12 +770,118 @@ export default function SuperAdminPanel() {
 
               <div style={{ marginTop: "10px" }}>
                 <button
+                  onClick={() => fetchServicios(b.id)}
                   className="btn btn-primary"
-                  onClick={() => prepararServicios(b.id)}
                 >
-                  ✂️ Servicios
+                  ✂️ Gestionar Servicios
                 </button>
+                {servicios[b.id] && (
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      borderTop: "1px solid #333",
+                      paddingTop: "10px",
+                    }}
+                  >
+                    <h4>Servicios</h4>
 
+                    {/* CREAR */}
+                    <input
+                      placeholder="Nombre"
+                      value={nuevoServicio[b.id]?.nombre || ""}
+                      onChange={(e) =>
+                        setNuevoServicio({
+                          ...nuevoServicio,
+                          [b.id]: {
+                            ...nuevoServicio[b.id],
+                            nombre: e.target.value,
+                          },
+                        })
+                      }
+                    />
+
+                    <input
+                      type="number"
+                      placeholder="Precio"
+                      value={nuevoServicio[b.id]?.precio || ""}
+                      onChange={(e) =>
+                        setNuevoServicio({
+                          ...nuevoServicio,
+                          [b.id]: {
+                            ...nuevoServicio[b.id],
+                            precio: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+
+                    <input
+                      type="number"
+                      placeholder="Duración"
+                      value={nuevoServicio[b.id]?.duracion || 30}
+                      onChange={(e) =>
+                        setNuevoServicio({
+                          ...nuevoServicio,
+                          [b.id]: {
+                            ...nuevoServicio[b.id],
+                            duracion: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+
+                    <button onClick={() => crearServicio(b.id)}>
+                      ➕ Crear
+                    </button>
+
+                    {/* LISTA */}
+                    {servicios[b.id].map((s) => (
+                      <div key={s.id} style={{ marginTop: "8px" }}>
+                        <input
+                          value={s.nombre}
+                          onChange={(e) =>
+                            actualizarServicio(b.id, s.id, {
+                              nombre: e.target.value,
+                            })
+                          }
+                        />
+
+                        <input
+                          type="number"
+                          value={s.precio}
+                          onChange={(e) =>
+                            actualizarServicio(b.id, s.id, {
+                              precio: Number(e.target.value),
+                            })
+                          }
+                        />
+
+                        <input
+                          type="number"
+                          value={s.duracion}
+                          onChange={(e) =>
+                            actualizarServicio(b.id, s.id, {
+                              duracion: Number(e.target.value),
+                            })
+                          }
+                        />
+
+                        <label>
+                          Activo
+                          <input
+                            type="checkbox"
+                            checked={s.activo}
+                            onChange={(e) =>
+                              actualizarServicio(b.id, s.id, {
+                                activo: e.target.checked,
+                              })
+                            }
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <button
                   className="btn btn-primary"
                   onClick={() => prepararCalendario(b.id)}
