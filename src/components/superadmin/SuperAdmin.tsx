@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../api";
 import { getToken } from "../../auth";
+import {
+  getFranjas,
+  toggleDia,
+  updateFranja,
+  removeFranja,
+  addFranja,
+  hasInvalidConfig,
+} from "../../utils/horarios";
 import "./SuperAdmin.css";
 
 interface Barberia {
@@ -17,7 +25,7 @@ interface Barberia {
   direccion?: string;
 
   horario_config?: any;
-  duracion?: number;
+  duracion_slot?: number;
   // 📱 contacto
   instagram_url?: string;
   whatsapp_url?: string;
@@ -51,11 +59,13 @@ export default function SuperAdminPanel() {
   const [loading, setLoading] = useState(true);
   const [servicios, setServicios] = useState<Record<number, any[]>>({});
   const [nuevoServicio, setNuevoServicio] = useState<Record<number, any>>({});
+  const [saving, setSaving] = useState<Record<number, boolean>>({});
   const [editData, setEditData] = useState<Record<number, Partial<Barberia>>>(
     {},
   );
+  const [editServicios, setEditServicios] = useState<Record<number, any[]>>({});
   const [page, setPage] = useState(1);
-  const itemsPerPage = 2;
+  const itemsPerPage = 1;
 
   const token = getToken();
 
@@ -89,9 +99,9 @@ export default function SuperAdminPanel() {
   }
 
   useEffect(() => {
-    setBarberias([]);
+    if (!token) return;
     fetchBarberias();
-  }, []);
+  }, [token]);
 
   async function crearBarberia(e: React.FormEvent) {
     e.preventDefault();
@@ -208,33 +218,39 @@ export default function SuperAdminPanel() {
     }
   }
   useEffect(() => {
-    if (barberias.length > 0) {
-      const initial: Record<number, any> = {};
+    if (barberias.length === 0) return;
+
+    setEditData((prev) => {
+      const next = { ...prev };
 
       barberias.forEach((b) => {
-        initial[b.id] = {
-          ...b,
-          horario_config: b.horario_config || {}, // 🔥 clave
-        };
+        if (!next[b.id]) {
+          next[b.id] = {
+            ...b,
+            horario_config: b.horario_config || {},
+            duracion_slot: b.duracion_slot ?? 30,
+          };
+        }
       });
 
-      setEditData(initial);
-    }
+      return next;
+    });
   }, [barberias]);
 
   async function actualizarBarberia(id: number) {
-    console.log("🔥 CONFIG FINAL:", editData[id]?.horario_config);
     if (!token) return;
 
-    try {
-      // 🔥 ENVIAMOS TODOS LOS CAMPOS, INCLUYENDO VACÍOS
-      const dataToSend = {
-        ...editData[id],
-        horario_config: editData[id]?.horario_config || {},
-      };
-      delete dataToSend.id; // quitamos solo el ID
+    setSaving((prev) => ({ ...prev, [id]: true }));
 
-      console.log("📤 Enviando data completa:", dataToSend);
+    try {
+      const dataToSend = Object.fromEntries(
+        Object.entries({
+          ...editData[id],
+          horario_config: editData[id]?.horario_config || {},
+        }).filter(([_, v]) => v !== undefined),
+      );
+
+      delete dataToSend.id;
 
       const res = await apiFetch(`/superadmin/actualizar-barberia/${id}`, {
         method: "PUT",
@@ -246,21 +262,25 @@ export default function SuperAdminPanel() {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.detail || "Error al actualizar");
 
-      alert("Guardado ✅ Generando horarios...");
+      // 🔥 regenerar horarios
+      await prepararCalendario(id);
+
+      alert("Guardado completo ✅");
 
       fetchBarberias();
     } catch (err: any) {
       alert("Error: " + err.message);
+    } finally {
+      setSaving((prev) => ({ ...prev, [id]: false }));
     }
   }
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
   const barberiasPaginated = barberias.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(barberias.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(barberias.length / itemsPerPage));
 
   async function fetchServicios(barberiaId: number) {
     try {
@@ -276,6 +296,10 @@ export default function SuperAdminPanel() {
       setServicios((prev) => ({
         ...prev,
         [barberiaId]: data,
+      }));
+      setEditServicios((prev) => ({
+        ...prev,
+        [barberiaId]: JSON.parse(JSON.stringify(data)), // copia profunda
       }));
     } catch (err) {
       console.error("Error servicios", err);
@@ -333,6 +357,55 @@ export default function SuperAdminPanel() {
       fetchServicios(barberiaId);
     } catch {
       alert("Error actualizando");
+    }
+  }
+
+  function updateField(id: number, field: keyof Barberia, value: any) {
+    setEditData((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [field]: value,
+      },
+    }));
+  }
+
+  function updateHorarioConfig(id: number, newConfig: any) {
+    setEditData((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        horario_config: newConfig,
+      },
+    }));
+  }
+
+  async function guardarServicios(barberiaId: number) {
+    const lista = editServicios[barberiaId];
+
+    try {
+      for (const s of lista) {
+        await apiFetch(`/admin/servicios/${s.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "x-barberia":
+              barberias.find((b) => b.id === barberiaId)?.slug || "",
+          },
+          body: JSON.stringify({
+            nombre: s.nombre,
+            precio: s.precio,
+            duracion: s.duracion,
+            activo: s.activo,
+          }),
+        });
+      }
+
+      alert("Servicios guardados ✅");
+      fetchServicios(barberiaId);
+    } catch {
+      alert("Error guardando servicios");
     }
   }
 
@@ -400,29 +473,13 @@ export default function SuperAdminPanel() {
               <input
                 placeholder="Nombre"
                 value={editData[b.id]?.nombre ?? ""}
-                onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      nombre: e.target.value,
-                    },
-                  })
-                }
+                onChange={(e) => updateField(b.id, "nombre", e.target.value)}
               />
 
               <input
                 placeholder="Slug"
                 value={editData[b.id]?.slug ?? ""}
-                onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      slug: e.target.value,
-                    },
-                  })
-                }
+                onChange={(e) => updateField(b.id, "slug", e.target.value)}
               />
 
               {/* =========================
@@ -431,28 +488,14 @@ export default function SuperAdminPanel() {
               <input
                 placeholder="Logo URL"
                 value={editData[b.id]?.logo_url ?? ""}
-                onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      logo_url: e.target.value,
-                    },
-                  })
-                }
+                onChange={(e) => updateField(b.id, "logo_url", e.target.value)}
               />
 
               <input
                 placeholder="Color primario"
                 value={editData[b.id]?.color_primario ?? ""}
                 onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      color_primario: e.target.value,
-                    },
-                  })
+                  updateField(b.id, "color_primario", e.target.value)
                 }
               />
 
@@ -460,13 +503,7 @@ export default function SuperAdminPanel() {
                 placeholder="Color secundario"
                 value={editData[b.id]?.color_secundario ?? ""}
                 onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      color_secundario: e.target.value,
-                    },
-                  })
+                  updateField(b.id, "color_secundario", e.target.value)
                 }
               />
 
@@ -477,13 +514,7 @@ export default function SuperAdminPanel() {
                 placeholder="Instagram"
                 value={editData[b.id]?.instagram_url ?? ""}
                 onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      instagram_url: e.target.value,
-                    },
-                  })
+                  updateField(b.id, "instagram_url", e.target.value)
                 }
               />
 
@@ -491,28 +522,19 @@ export default function SuperAdminPanel() {
                 placeholder="WhatsApp"
                 value={editData[b.id]?.whatsapp_url ?? ""}
                 onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      whatsapp_url: e.target.value.replace(/\D/g, ""),
-                    },
-                  })
+                  updateField(
+                    b.id,
+                    "whatsapp_url",
+                    e.target.value.replace(/\D/g, ""),
+                  )
                 }
               />
-
               <input
                 type="url"
                 placeholder="Google Maps URL"
                 value={editData[b.id]?.ubicacion_url ?? ""}
                 onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      ubicacion_url: e.target.value,
-                    },
-                  })
+                  updateField(b.id, "ubicacion_url", e.target.value)
                 }
               />
 
@@ -521,30 +543,16 @@ export default function SuperAdminPanel() {
             ========================= */}
               <textarea
                 placeholder="Horarios"
-                value={editData[b.id]?.horarios_texto ?? b.horarios_texto ?? ""}
+                value={editData[b.id]?.horarios_texto ?? ""}
                 onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      horarios_texto: e.target.value,
-                    },
-                  })
+                  updateField(b.id, "horarios_texto", e.target.value)
                 }
               />
 
               <textarea
                 placeholder="Dirección"
-                value={editData[b.id]?.direccion ?? b.direccion ?? ""}
-                onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      direccion: e.target.value,
-                    },
-                  })
-                }
+                value={editData[b.id]?.direccion ?? ""}
+                onChange={(e) => updateField(b.id, "direccion", e.target.value)}
               />
               {/* =========================
    CONFIG AVANZADA
@@ -556,16 +564,9 @@ export default function SuperAdminPanel() {
 
               <input
                 type="number"
-                placeholder="30"
-                value={editData[b.id]?.duracion ?? 30}
+                value={editData[b.id]?.duracion_slot ?? 30}
                 onChange={(e) =>
-                  setEditData({
-                    ...editData,
-                    [b.id]: {
-                      ...editData[b.id],
-                      duracion: Number(e.target.value),
-                    },
-                  })
+                  updateField(b.id, "duracion_slot", Number(e.target.value))
                 }
               />
 
@@ -576,16 +577,9 @@ export default function SuperAdminPanel() {
               <h4 style={{ marginTop: "10px" }}>📅 Horarios</h4>
 
               {dias.map((dia) => {
-                const config = editData[b.id]?.horario_config || {};
-                const invalid = Object.values(config).some((franjas: any) =>
-                  franjas.some((f: any) => f[0] >= f[1]),
-                );
+                const config = editData[b.id]?.horario_config ?? {};
 
-                if (invalid) {
-                  alert("Horario inválido (inicio >= fin)");
-                  return;
-                }
-                const franjas: number[][] = config[dia] || [];
+                const franjas = getFranjas(config, dia);
 
                 return (
                   <div
@@ -610,23 +604,11 @@ export default function SuperAdminPanel() {
                         type="checkbox"
                         checked={franjas.length > 0}
                         onChange={() => {
-                          const newConfig = {
-                            ...(editData[b.id]?.horario_config || {}),
-                          };
-
-                          if (franjas.length > 0) {
-                            delete newConfig[dia]; // 🔥 cerrar día
-                          } else {
-                            newConfig[dia] = [[10, 18]]; // 🔥 abrir con default
-                          }
-
-                          setEditData({
-                            ...editData,
-                            [b.id]: {
-                              ...editData[b.id],
-                              horario_config: newConfig,
-                            },
-                          });
+                          const newConfig = toggleDia(
+                            editData[b.id]?.horario_config || {},
+                            dia,
+                          );
+                          updateHorarioConfig(b.id, newConfig);
                         }}
                       />
                     </div>
@@ -651,20 +633,14 @@ export default function SuperAdminPanel() {
                         <select
                           value={franja[0]}
                           onChange={(e) => {
-                            const newFranjas = franjas.map((f, i) =>
-                              i === index ? [Number(e.target.value), f[1]] : f,
+                            const newConfig = updateFranja(
+                              editData[b.id]?.horario_config,
+                              dia,
+                              index,
+                              [Number(e.target.value), franja[1]],
                             );
 
-                            setEditData({
-                              ...editData,
-                              [b.id]: {
-                                ...editData[b.id],
-                                horario_config: {
-                                  ...(editData[b.id]?.horario_config || {}),
-                                  [dia]: newFranjas,
-                                },
-                              },
-                            });
+                            updateHorarioConfig(b.id, newConfig);
                           }}
                         >
                           {[...Array(24)].map((_, h) => (
@@ -680,20 +656,14 @@ export default function SuperAdminPanel() {
                         <select
                           value={franja[1]}
                           onChange={(e) => {
-                            const newFranjas = franjas.map((f, i) =>
-                              i === index ? [f[0], Number(e.target.value)] : f,
+                            const newConfig = updateFranja(
+                              editData[b.id]?.horario_config,
+                              dia,
+                              index,
+                              [franja[0], Number(e.target.value)],
                             );
 
-                            setEditData({
-                              ...editData,
-                              [b.id]: {
-                                ...editData[b.id],
-                                horario_config: {
-                                  ...editData[b.id]?.horario_config,
-                                  [dia]: newFranjas,
-                                },
-                              },
-                            });
+                            updateHorarioConfig(b.id, newConfig);
                           }}
                         >
                           {[...Array(24)].map((_, h) => (
@@ -705,21 +675,15 @@ export default function SuperAdminPanel() {
 
                         {/* ELIMINAR */}
                         <button
+                          type="button"
                           onClick={() => {
-                            const newFranjas = franjas.filter(
-                              (_, i) => i !== index,
+                            const newConfig = removeFranja(
+                              editData[b.id]?.horario_config,
+                              dia,
+                              index,
                             );
 
-                            setEditData({
-                              ...editData,
-                              [b.id]: {
-                                ...editData[b.id],
-                                horario_config: {
-                                  ...editData[b.id]?.horario_config,
-                                  [dia]: newFranjas,
-                                },
-                              },
-                            });
+                            updateHorarioConfig(b.id, newConfig);
                           }}
                         >
                           ❌
@@ -733,18 +697,12 @@ export default function SuperAdminPanel() {
                         type="button"
                         style={{ marginTop: "6px" }}
                         onClick={() => {
-                          const newFranjas = [...franjas, [10, 18]];
+                          const newConfig = addFranja(
+                            editData[b.id]?.horario_config || {},
+                            dia,
+                          );
 
-                          setEditData({
-                            ...editData,
-                            [b.id]: {
-                              ...editData[b.id],
-                              horario_config: {
-                                ...editData[b.id]?.horario_config,
-                                [dia]: newFranjas,
-                              },
-                            },
-                          });
+                          updateHorarioConfig(b.id, newConfig);
                         }}
                       >
                         ➕ Agregar franja
@@ -759,9 +717,23 @@ export default function SuperAdminPanel() {
             ========================= */}
               <button
                 className="btn btn-save"
-                onClick={() => actualizarBarberia(b.id)}
+                disabled={saving[b.id]}
+                onClick={() => {
+                  if (saving[b.id]) return; // 🔥 evita doble ejecución
+
+                  const invalid = hasInvalidConfig(
+                    editData[b.id]?.horario_config,
+                  );
+
+                  if (invalid) {
+                    alert("Corregí los horarios antes de guardar");
+                    return;
+                  }
+
+                  actualizarBarberia(b.id);
+                }}
               >
-                💾 Guardar
+                {saving[b.id] ? "Guardando..." : "💾 Guardar"}
               </button>
 
               {b.activo === false && (
@@ -835,59 +807,123 @@ export default function SuperAdminPanel() {
                     </button>
 
                     {/* LISTA */}
-                    {servicios[b.id].map((s) => (
+                    {editServicios[b.id]?.map((s) => (
                       <div key={s.id} style={{ marginTop: "8px" }}>
+                        {/* NOMBRE */}
                         <input
                           value={s.nombre}
-                          onChange={(e) =>
-                            actualizarServicio(b.id, s.id, {
-                              nombre: e.target.value,
-                            })
-                          }
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            setEditServicios((prev) => {
+                              const updated = [...(prev[b.id] || [])];
+                              const index = updated.findIndex(
+                                (x) => x.id === s.id,
+                              );
+
+                              updated[index] = {
+                                ...updated[index],
+                                nombre: value,
+                              };
+
+                              return {
+                                ...prev,
+                                [b.id]: updated,
+                              };
+                            });
+                          }}
                         />
 
+                        {/* PRECIO */}
                         <input
                           type="number"
                           value={s.precio}
-                          onChange={(e) =>
-                            actualizarServicio(b.id, s.id, {
-                              precio: Number(e.target.value),
-                            })
-                          }
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+
+                            setEditServicios((prev) => {
+                              const updated = [...(prev[b.id] || [])];
+                              const index = updated.findIndex(
+                                (x) => x.id === s.id,
+                              );
+
+                              updated[index] = {
+                                ...updated[index],
+                                precio: value,
+                              };
+
+                              return {
+                                ...prev,
+                                [b.id]: updated,
+                              };
+                            });
+                          }}
                         />
 
+                        {/* DURACIÓN */}
                         <input
                           type="number"
                           value={s.duracion}
-                          onChange={(e) =>
-                            actualizarServicio(b.id, s.id, {
-                              duracion: Number(e.target.value),
-                            })
-                          }
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+
+                            setEditServicios((prev) => {
+                              const updated = [...(prev[b.id] || [])];
+                              const index = updated.findIndex(
+                                (x) => x.id === s.id,
+                              );
+
+                              updated[index] = {
+                                ...updated[index],
+                                duracion: value,
+                              };
+
+                              return {
+                                ...prev,
+                                [b.id]: updated,
+                              };
+                            });
+                          }}
                         />
 
+                        {/* ACTIVO */}
                         <label>
                           Activo
                           <input
                             type="checkbox"
                             checked={s.activo}
-                            onChange={(e) =>
-                              actualizarServicio(b.id, s.id, {
-                                activo: e.target.checked,
-                              })
-                            }
+                            onChange={(e) => {
+                              const value = e.target.checked;
+
+                              setEditServicios((prev) => {
+                                const updated = [...(prev[b.id] || [])];
+                                const index = updated.findIndex(
+                                  (x) => x.id === s.id,
+                                );
+
+                                updated[index] = {
+                                  ...updated[index],
+                                  activo: value,
+                                };
+
+                                return {
+                                  ...prev,
+                                  [b.id]: updated,
+                                };
+                              });
+                            }}
                           />
                         </label>
                       </div>
                     ))}
                   </div>
                 )}
-                <button
+                {/* <button
                   className="btn btn-primary"
                   onClick={() => prepararCalendario(b.id)}
                 >
                   📅 Horarios
-                </button>
+                </button> */}
 
                 <button
                   className="btn btn-warning"
@@ -909,6 +945,12 @@ export default function SuperAdminPanel() {
                   type="button"
                 >
                   Eliminar
+                </button>
+                <button
+                  onClick={() => guardarServicios(b.id)}
+                  className="btn btn-save"
+                >
+                  💾 Guardar servicios
                 </button>
               </div>
             </li>
