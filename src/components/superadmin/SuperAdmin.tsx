@@ -338,28 +338,6 @@ export default function SuperAdminPanel() {
     }
   }
 
-  async function actualizarServicio(
-    barberiaId: number,
-    servicioId: number,
-    data: any,
-  ) {
-    try {
-      await apiFetch(`/admin/servicios/${servicioId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          "x-barberia": barberias.find((b) => b.id === barberiaId)?.slug || "",
-        },
-        body: JSON.stringify(data),
-      });
-
-      fetchServicios(barberiaId);
-    } catch {
-      alert("Error actualizando");
-    }
-  }
-
   function updateField(id: number, field: keyof Barberia, value: any) {
     setEditData((prev) => ({
       ...prev,
