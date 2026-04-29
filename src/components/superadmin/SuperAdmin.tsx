@@ -58,7 +58,7 @@ export default function SuperAdminPanel() {
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [servicios, setServicios] = useState<Record<number, any[]>>({});
-  const [nuevoServicio, setNuevoServicio] = useState<Record<number, any>>({});
+
   const [saving, setSaving] = useState<Record<number, boolean>>({});
   const [editData, setEditData] = useState<Record<number, Partial<Barberia>>>(
     {},
@@ -199,42 +199,6 @@ export default function SuperAdminPanel() {
   //     alert("Error: " + err.message);
   //   }
   // }
-  async function prepararCalendario(barberiaId: number) {
-    try {
-      const res = await apiFetch("/preparar-calendario", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ barberia_id: barberiaId }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Error");
-
-      alert("Horarios generados 📅");
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    }
-  }
-  useEffect(() => {
-    if (!barberias.length) return;
-
-    setEditData((prev) => {
-      const updated = { ...prev };
-
-      barberias.forEach((b) => {
-        updated[b.id] = {
-          ...b,
-          horario_config: b.horario_config || {},
-          duracion_slot: b.duracion_slot ?? 30,
-        };
-      });
-
-      return updated;
-    });
-  }, [barberias]);
 
   async function actualizarBarberia(id: number) {
     if (!token || saving[id] === true) return;
