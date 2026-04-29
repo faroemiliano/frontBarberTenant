@@ -78,6 +78,7 @@ export default function SuperAdminPanel() {
     "sabado",
     "domingo",
   ];
+
   async function fetchBarberias() {
     if (!token) return;
     setLoading(true);
@@ -218,39 +219,82 @@ export default function SuperAdminPanel() {
     }
   }
   useEffect(() => {
-    if (barberias.length === 0) return;
+    if (!barberias.length) return;
 
     setEditData((prev) => {
-      const next = { ...prev };
+      const updated = { ...prev };
 
       barberias.forEach((b) => {
-        if (!next[b.id]) {
-          next[b.id] = {
-            ...b,
-            horario_config: b.horario_config || {},
-            duracion_slot: b.duracion_slot ?? 30,
-          };
-        }
+        updated[b.id] = {
+          ...b,
+          horario_config: b.horario_config || {},
+          duracion_slot: b.duracion_slot ?? 30,
+        };
       });
 
-      return next;
+      return updated;
     });
   }, [barberias]);
 
   async function actualizarBarberia(id: number) {
-    if (!token) return;
+    if (!token || saving[id] === true) return;
 
     setSaving((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const dataToSend = Object.fromEntries(
-        Object.entries({
-          ...editData[id],
-          horario_config: editData[id]?.horario_config || {},
-        }).filter(([_, v]) => v !== undefined),
-      );
+      const serviciosActuales = editServicios[id] || [];
+      const serviciosOriginales = servicios[id] || [];
+
+      // 🟢 CREATE
+      const create = serviciosActuales
+        .filter((s) => s.isNew && s.nombre?.trim() && s.precio > 0)
+        .map((s) => ({
+          nombre: s.nombre.trim(),
+          precio: Number(s.precio),
+          duracion: Number(s.duracion || 30),
+          activo: Boolean(s.activo),
+        }));
+
+      // 🟡 UPDATE
+      const update = serviciosActuales
+        .filter((s) => !s.isNew && s.nombre?.trim() && s.precio > 0)
+        .map((s) => ({
+          id: s.id,
+          nombre: s.nombre.trim(),
+          precio: Number(s.precio),
+          duracion: Number(s.duracion || 30),
+          activo: Boolean(s.activo),
+        }));
+
+      // 🔴 DELETE
+      const delete_ids = serviciosOriginales
+        .filter((orig) => {
+          return !serviciosActuales.some((s) => {
+            // si es nuevo no cuenta
+            if (s.isNew) return false;
+
+            return s.id === orig.id;
+          });
+        })
+        .map((s) => s.id)
+        .filter(Boolean); // 🔥 clave
+
+      const dataToSend = {
+        ...editData[id],
+        horario_config: editData[id]?.horario_config || {},
+        servicios: {
+          create,
+          update,
+          delete_ids,
+        },
+      };
 
       delete dataToSend.id;
+      console.log(
+        "🚀 DATA FINAL QUE SE ENVÍA:",
+        JSON.stringify(dataToSend, null, 2),
+      );
+      console.log("DATA TO SEND", dataToSend);
 
       const res = await apiFetch(`/superadmin/actualizar-barberia/${id}`, {
         method: "PUT",
@@ -264,12 +308,14 @@ export default function SuperAdminPanel() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Error al actualizar");
 
-      // 🔥 regenerar horarios
-      await prepararCalendario(id);
-
       alert("Guardado completo ✅");
-
-      fetchBarberias();
+      // limpiar estado viejo
+      setEditServicios((prev) => ({
+        ...prev,
+        [id]: [],
+      }));
+      await fetchBarberias();
+      await fetchServicios(id);
     } catch (err: any) {
       alert("Error: " + err.message);
     } finally {
@@ -291,52 +337,61 @@ export default function SuperAdminPanel() {
         },
       });
 
+      if (!res.ok) throw new Error("Error cargando servicios");
+
       const data = await res.json();
+      const safeData = Array.isArray(data) ? data : [];
 
       setServicios((prev) => ({
         ...prev,
-        [barberiaId]: data,
+        [barberiaId]: safeData,
       }));
+
       setEditServicios((prev) => ({
         ...prev,
-        [barberiaId]: JSON.parse(JSON.stringify(data)), // copia profunda
+        [barberiaId]: JSON.parse(JSON.stringify(safeData)),
       }));
     } catch (err) {
       console.error("Error servicios", err);
-    }
-  }
 
-  async function crearServicio(barberiaId: number) {
-    const s = nuevoServicio[barberiaId];
-
-    if (!s?.nombre || !s?.precio) {
-      alert("Completar datos");
-      return;
-    }
-
-    try {
-      const res = await apiFetch("/admin/servicios", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          "x-barberia": barberias.find((b) => b.id === barberiaId)?.slug || "",
-        },
-        body: JSON.stringify(s),
-      });
-
-      if (!res.ok) throw new Error("Error");
-
-      setNuevoServicio((prev) => ({
+      setServicios((prev) => ({
         ...prev,
-        [barberiaId]: {},
+        [barberiaId]: [],
       }));
-
-      fetchServicios(barberiaId);
-    } catch (err) {
-      alert("Error creando servicio");
     }
   }
+
+  // async function crearServicio(barberiaId: number) {
+  //   const s = nuevoServicio[barberiaId];
+
+  //   if (!s?.nombre || !s?.precio) {
+  //     alert("Completar datos");
+  //     return;
+  //   }
+
+  //   try {
+  //     const res = await apiFetch("/admin/servicios", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //         "x-barberia": barberias.find((b) => b.id === barberiaId)?.slug || "",
+  //       },
+  //       body: JSON.stringify(s),
+  //     });
+
+  //     if (!res.ok) throw new Error("Error");
+
+  //     setNuevoServicio((prev) => ({
+  //       ...prev,
+  //       [barberiaId]: {},
+  //     }));
+
+  //     fetchServicios(barberiaId);
+  //   } catch (err) {
+  //     alert("Error creando servicio");
+  //   }
+  // }
 
   function updateField(id: number, field: keyof Barberia, value: any) {
     setEditData((prev) => ({
@@ -356,35 +411,6 @@ export default function SuperAdminPanel() {
         horario_config: newConfig,
       },
     }));
-  }
-
-  async function guardarServicios(barberiaId: number) {
-    const lista = editServicios[barberiaId];
-
-    try {
-      for (const s of lista) {
-        await apiFetch(`/admin/servicios/${s.id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            "x-barberia":
-              barberias.find((b) => b.id === barberiaId)?.slug || "",
-          },
-          body: JSON.stringify({
-            nombre: s.nombre,
-            precio: s.precio,
-            duracion: s.duracion,
-            activo: s.activo,
-          }),
-        });
-      }
-
-      alert("Servicios guardados ✅");
-      fetchServicios(barberiaId);
-    } catch {
-      alert("Error guardando servicios");
-    }
   }
 
   return (
@@ -429,7 +455,9 @@ export default function SuperAdminPanel() {
           required
         />
 
-        <button type="submit">Crear barbería</button>
+        <button type="submit" disabled={!nombre || !adminEmail}>
+          Crear barbería
+        </button>
       </form>
 
       {/* =========================
@@ -555,7 +583,7 @@ export default function SuperAdminPanel() {
               <h4 style={{ marginTop: "10px" }}>📅 Horarios</h4>
 
               {dias.map((dia) => {
-                const config = editData[b.id]?.horario_config ?? {};
+                const config = editData[b.id]?.horario_config || {};
 
                 const franjas = getFranjas(config, dia);
 
@@ -725,7 +753,7 @@ export default function SuperAdminPanel() {
                 >
                   ✂️ Gestionar Servicios
                 </button>
-                {servicios[b.id] && (
+                {editServicios[b.id] && (
                   <div
                     style={{
                       marginTop: "10px",
@@ -736,153 +764,61 @@ export default function SuperAdminPanel() {
                     <h4>Servicios</h4>
 
                     {/* CREAR */}
-                    <input
-                      placeholder="Nombre"
-                      value={nuevoServicio[b.id]?.nombre || ""}
-                      onChange={(e) =>
-                        setNuevoServicio({
-                          ...nuevoServicio,
-                          [b.id]: {
-                            ...nuevoServicio[b.id],
-                            nombre: e.target.value,
-                          },
-                        })
-                      }
-                    />
 
-                    <input
-                      type="number"
-                      placeholder="Precio"
-                      value={nuevoServicio[b.id]?.precio || ""}
-                      onChange={(e) =>
-                        setNuevoServicio({
-                          ...nuevoServicio,
-                          [b.id]: {
-                            ...nuevoServicio[b.id],
-                            precio: Number(e.target.value),
-                          },
-                        })
-                      }
-                    />
+                    <button
+                      onClick={() => {
+                        const current = editServicios[b.id] || [];
 
-                    <input
-                      type="number"
-                      placeholder="Duración"
-                      value={nuevoServicio[b.id]?.duracion || 30}
-                      onChange={(e) =>
-                        setNuevoServicio({
-                          ...nuevoServicio,
-                          [b.id]: {
-                            ...nuevoServicio[b.id],
-                            duracion: Number(e.target.value),
-                          },
-                        })
-                      }
-                    />
+                        const hasEmpty = current.some(
+                          (s) => !s.nombre?.trim() || s.precio <= 0,
+                        );
 
-                    <button onClick={() => crearServicio(b.id)}>
+                        if (hasEmpty) {
+                          alert(
+                            "Terminá de completar el servicio antes de crear otro",
+                          );
+                          return;
+                        }
+
+                        setEditServicios((prev) => ({
+                          ...prev,
+                          [b.id]: [
+                            ...current,
+                            {
+                              id: null,
+                              tempId: Date.now(), // 🔥 clave única
+                              isNew: true,
+                              nombre: "",
+                              precio: 0,
+                              duracion: 30,
+                              activo: true,
+                            },
+                          ],
+                        }));
+                      }}
+                    >
                       ➕ Crear
                     </button>
 
                     {/* LISTA */}
-                    {editServicios[b.id]?.map((s) => (
-                      <div key={s.id} style={{ marginTop: "8px" }}>
-                        {/* NOMBRE */}
-                        <input
-                          value={s.nombre}
-                          onChange={(e) => {
-                            const value = e.target.value;
+                    {editServicios[b.id]?.map((s) => {
+                      const key = s.id ?? s.tempId;
 
-                            setEditServicios((prev) => {
-                              const updated = [...(prev[b.id] || [])];
-                              const index = updated.findIndex(
-                                (x) => x.id === s.id,
-                              );
-
-                              updated[index] = {
-                                ...updated[index],
-                                nombre: value,
-                              };
-
-                              return {
-                                ...prev,
-                                [b.id]: updated,
-                              };
-                            });
-                          }}
-                        />
-
-                        {/* PRECIO */}
-                        <input
-                          type="number"
-                          value={s.precio}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-
-                            setEditServicios((prev) => {
-                              const updated = [...(prev[b.id] || [])];
-                              const index = updated.findIndex(
-                                (x) => x.id === s.id,
-                              );
-
-                              updated[index] = {
-                                ...updated[index],
-                                precio: value,
-                              };
-
-                              return {
-                                ...prev,
-                                [b.id]: updated,
-                              };
-                            });
-                          }}
-                        />
-
-                        {/* DURACIÓN */}
-                        <input
-                          type="number"
-                          value={s.duracion}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-
-                            setEditServicios((prev) => {
-                              const updated = [...(prev[b.id] || [])];
-                              const index = updated.findIndex(
-                                (x) => x.id === s.id,
-                              );
-
-                              updated[index] = {
-                                ...updated[index],
-                                duracion: value,
-                              };
-
-                              return {
-                                ...prev,
-                                [b.id]: updated,
-                              };
-                            });
-                          }}
-                        />
-
-                        {/* ACTIVO */}
-                        <label>
-                          Activo
+                      return (
+                        <div key={key} style={{ marginTop: "8px" }}>
+                          {/* NOMBRE */}
                           <input
-                            type="checkbox"
-                            checked={s.activo}
+                            value={s.nombre}
                             onChange={(e) => {
-                              const value = e.target.checked;
+                              const value = e.target.value;
 
                               setEditServicios((prev) => {
-                                const updated = [...(prev[b.id] || [])];
-                                const index = updated.findIndex(
-                                  (x) => x.id === s.id,
+                                const updated = (prev[b.id] || []).map(
+                                  (item) =>
+                                    (item.id ?? item.tempId) === key
+                                      ? { ...item, nombre: value }
+                                      : item,
                                 );
-
-                                updated[index] = {
-                                  ...updated[index],
-                                  activo: value,
-                                };
 
                                 return {
                                   ...prev,
@@ -891,9 +827,100 @@ export default function SuperAdminPanel() {
                               });
                             }}
                           />
-                        </label>
-                      </div>
-                    ))}
+
+                          {/* PRECIO */}
+                          <input
+                            type="number"
+                            value={s.precio}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+
+                              setEditServicios((prev) => {
+                                const updated = (prev[b.id] || []).map(
+                                  (item) =>
+                                    (item.id ?? item.tempId) === key
+                                      ? { ...item, precio: value }
+                                      : item,
+                                );
+
+                                return {
+                                  ...prev,
+                                  [b.id]: updated,
+                                };
+                              });
+                            }}
+                          />
+
+                          {/* DURACIÓN */}
+                          <input
+                            type="number"
+                            min={5}
+                            step={5}
+                            value={s.duracion}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+
+                              setEditServicios((prev) => {
+                                const updated = (prev[b.id] || []).map(
+                                  (item) =>
+                                    (item.id ?? item.tempId) === key
+                                      ? { ...item, duracion: value }
+                                      : item,
+                                );
+
+                                return {
+                                  ...prev,
+                                  [b.id]: updated,
+                                };
+                              });
+                            }}
+                          />
+
+                          {/* ACTIVO */}
+                          <label>
+                            Activo
+                            <input
+                              type="checkbox"
+                              checked={s.activo}
+                              onChange={(e) => {
+                                const value = e.target.checked;
+
+                                setEditServicios((prev) => {
+                                  const updated = (prev[b.id] || []).map(
+                                    (item) =>
+                                      (item.id ?? item.tempId) === key
+                                        ? { ...item, activo: value }
+                                        : item,
+                                  );
+
+                                  return {
+                                    ...prev,
+                                    [b.id]: updated,
+                                  };
+                                });
+                              }}
+                            />
+                          </label>
+
+                          {/* DELETE */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!confirm("¿Eliminar servicio?")) return;
+
+                              setEditServicios((prev) => ({
+                                ...prev,
+                                [b.id]: (prev[b.id] || []).filter(
+                                  (item) => (item.id ?? item.tempId) !== key,
+                                ),
+                              }));
+                            }}
+                          >
+                            🗑
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 {/* <button
@@ -923,12 +950,6 @@ export default function SuperAdminPanel() {
                   type="button"
                 >
                   Eliminar
-                </button>
-                <button
-                  onClick={() => guardarServicios(b.id)}
-                  className="btn btn-save"
-                >
-                  💾 Guardar servicios
                 </button>
               </div>
             </li>
