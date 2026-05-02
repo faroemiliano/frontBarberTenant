@@ -82,17 +82,26 @@ export default function SuperAdminPanel() {
   async function fetchBarberias() {
     if (!token) return;
     setLoading(true);
+
     try {
       const res = await apiFetch("/superadmin/listar-barberias", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
 
-      // Forzar que sea array
-      setBarberias(Array.isArray(data) ? data : []);
-      console.log("Barberías obtenidas:", data);
+      const data = await res.json();
+      const safe = Array.isArray(data) ? data : [];
+
+      setBarberias(safe);
+
+      // 🔥 CLAVE
+      const editObj: Record<number, Partial<Barberia>> = {};
+      safe.forEach((b: Barberia) => {
+        editObj[b.id] = { ...b };
+      });
+
+      setEditData(editObj);
     } catch (err) {
-      console.error("Error al obtener barberías:", err);
+      console.error(err);
       setBarberias([]);
     } finally {
       setLoading(false);
@@ -201,7 +210,7 @@ export default function SuperAdminPanel() {
   // }
 
   async function actualizarBarberia(id: number) {
-    if (!token || saving[id] === true) return;
+    if (!token || saving[id]) return;
 
     setSaving((prev) => ({ ...prev, [id]: true }));
 
@@ -234,18 +243,17 @@ export default function SuperAdminPanel() {
       const delete_ids = serviciosOriginales
         .filter((orig) => {
           return !serviciosActuales.some((s) => {
-            // si es nuevo no cuenta
             if (s.isNew) return false;
-
             return s.id === orig.id;
           });
         })
         .map((s) => s.id)
-        .filter(Boolean); // 🔥 clave
+        .filter(Boolean);
 
-      const dataToSend = {
-        ...editData[id],
-        horario_config: editData[id]?.horario_config || {},
+      const current = editData[id] || {};
+
+      // 🔥 LIMPIEZA PRO (solo mandamos lo necesario)
+      const dataToSend: any = {
         servicios: {
           create,
           update,
@@ -253,12 +261,33 @@ export default function SuperAdminPanel() {
         },
       };
 
-      delete dataToSend.id;
-      console.log(
-        "🚀 DATA FINAL QUE SE ENVÍA:",
-        JSON.stringify(dataToSend, null, 2),
-      );
-      console.log("DATA TO SEND", dataToSend);
+      if (current.nombre) dataToSend.nombre = current.nombre;
+      if (current.slug) dataToSend.slug = current.slug;
+      if (current.logo_url !== undefined)
+        dataToSend.logo_url = current.logo_url;
+      if (current.color_primario !== undefined)
+        dataToSend.color_primario = current.color_primario;
+      if (current.color_secundario !== undefined)
+        dataToSend.color_secundario = current.color_secundario;
+      if (current.instagram_url !== undefined)
+        dataToSend.instagram_url = current.instagram_url;
+      if (current.whatsapp_url !== undefined)
+        dataToSend.whatsapp_url = current.whatsapp_url;
+      if (current.ubicacion_url !== undefined)
+        dataToSend.ubicacion_url = current.ubicacion_url;
+      if (current.horarios_texto !== undefined)
+        dataToSend.horarios_texto = current.horarios_texto;
+      if (current.direccion !== undefined)
+        dataToSend.direccion = current.direccion;
+      if (current.duracion_slot !== undefined)
+        dataToSend.duracion_slot = current.duracion_slot;
+
+      // 🔥 MUY IMPORTANTE
+      if (current.horario_config) {
+        dataToSend.horario_config = current.horario_config;
+      }
+
+      console.log("🚀 DATA FINAL:", dataToSend);
 
       const res = await apiFetch(`/superadmin/actualizar-barberia/${id}`, {
         method: "PUT",
@@ -273,11 +302,12 @@ export default function SuperAdminPanel() {
       if (!res.ok) throw new Error(data.detail || "Error al actualizar");
 
       alert("Guardado completo ✅");
-      // limpiar estado viejo
+
       setEditServicios((prev) => ({
         ...prev,
         [id]: [],
       }));
+
       await fetchBarberias();
       await fetchServicios(id);
     } catch (err: any) {
@@ -286,6 +316,7 @@ export default function SuperAdminPanel() {
       setSaving((prev) => ({ ...prev, [id]: false }));
     }
   }
+
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
@@ -442,13 +473,13 @@ export default function SuperAdminPanel() {
             ========================= */}
               <input
                 placeholder="Nombre"
-                value={editData[b.id]?.nombre ?? ""}
+                value={editData[b.id]?.nombre ?? b.nombre ?? ""}
                 onChange={(e) => updateField(b.id, "nombre", e.target.value)}
               />
 
               <input
                 placeholder="Slug"
-                value={editData[b.id]?.slug ?? ""}
+                value={editData[b.id]?.slug ?? b.slug ?? ""}
                 onChange={(e) => updateField(b.id, "slug", e.target.value)}
               />
 
@@ -457,13 +488,13 @@ export default function SuperAdminPanel() {
             ========================= */}
               <input
                 placeholder="Logo URL"
-                value={editData[b.id]?.logo_url ?? ""}
+                value={editData[b.id]?.logo_url ?? b.logo_url ?? ""}
                 onChange={(e) => updateField(b.id, "logo_url", e.target.value)}
               />
 
               <input
                 placeholder="Color primario"
-                value={editData[b.id]?.color_primario ?? ""}
+                value={editData[b.id]?.color_primario ?? b.color_primario ?? ""}
                 onChange={(e) =>
                   updateField(b.id, "color_primario", e.target.value)
                 }
@@ -471,7 +502,9 @@ export default function SuperAdminPanel() {
 
               <input
                 placeholder="Color secundario"
-                value={editData[b.id]?.color_secundario ?? ""}
+                value={
+                  editData[b.id]?.color_secundario ?? b.color_secundario ?? ""
+                }
                 onChange={(e) =>
                   updateField(b.id, "color_secundario", e.target.value)
                 }
@@ -482,7 +515,7 @@ export default function SuperAdminPanel() {
             ========================= */}
               <input
                 placeholder="Instagram"
-                value={editData[b.id]?.instagram_url ?? ""}
+                value={editData[b.id]?.instagram_url ?? b.instagram_url ?? ""}
                 onChange={(e) =>
                   updateField(b.id, "instagram_url", e.target.value)
                 }
@@ -490,7 +523,7 @@ export default function SuperAdminPanel() {
 
               <input
                 placeholder="WhatsApp"
-                value={editData[b.id]?.whatsapp_url ?? ""}
+                value={editData[b.id]?.whatsapp_url ?? b.whatsapp_url ?? ""}
                 onChange={(e) =>
                   updateField(
                     b.id,
@@ -502,7 +535,7 @@ export default function SuperAdminPanel() {
               <input
                 type="url"
                 placeholder="Google Maps URL"
-                value={editData[b.id]?.ubicacion_url ?? ""}
+                value={editData[b.id]?.ubicacion_url ?? b.ubicacion_url ?? ""}
                 onChange={(e) =>
                   updateField(b.id, "ubicacion_url", e.target.value)
                 }
@@ -513,7 +546,7 @@ export default function SuperAdminPanel() {
             ========================= */}
               <textarea
                 placeholder="Horarios"
-                value={editData[b.id]?.horarios_texto ?? ""}
+                value={editData[b.id]?.horarios_texto ?? b.horarios_texto ?? ""}
                 onChange={(e) =>
                   updateField(b.id, "horarios_texto", e.target.value)
                 }
@@ -521,7 +554,7 @@ export default function SuperAdminPanel() {
 
               <textarea
                 placeholder="Dirección"
-                value={editData[b.id]?.direccion ?? ""}
+                value={editData[b.id]?.direccion ?? b.direccion ?? ""}
                 onChange={(e) => updateField(b.id, "direccion", e.target.value)}
               />
               {/* =========================
@@ -534,7 +567,7 @@ export default function SuperAdminPanel() {
 
               <input
                 type="number"
-                value={editData[b.id]?.duracion_slot ?? 30}
+                value={editData[b.id]?.duracion_slot ?? b.duracion_slot ?? 30}
                 onChange={(e) =>
                   updateField(b.id, "duracion_slot", Number(e.target.value))
                 }
@@ -547,7 +580,8 @@ export default function SuperAdminPanel() {
               <h4 style={{ marginTop: "10px" }}>📅 Horarios</h4>
 
               {dias.map((dia) => {
-                const config = editData[b.id]?.horario_config || {};
+                const config =
+                  editData[b.id]?.horario_config ?? b.horario_config ?? {};
 
                 const franjas = getFranjas(config, dia);
 
@@ -574,10 +608,12 @@ export default function SuperAdminPanel() {
                         type="checkbox"
                         checked={franjas.length > 0}
                         onChange={() => {
-                          const newConfig = toggleDia(
-                            editData[b.id]?.horario_config || {},
-                            dia,
-                          );
+                          const baseConfig =
+                            editData[b.id]?.horario_config ??
+                            b.horario_config ??
+                            {};
+
+                          const newConfig = toggleDia(baseConfig, dia);
                           updateHorarioConfig(b.id, newConfig);
                         }}
                       />
@@ -603,8 +639,13 @@ export default function SuperAdminPanel() {
                         <select
                           value={franja[0]}
                           onChange={(e) => {
+                            const baseConfig =
+                              editData[b.id]?.horario_config ??
+                              b.horario_config ??
+                              {};
+
                             const newConfig = updateFranja(
-                              editData[b.id]?.horario_config,
+                              baseConfig,
                               dia,
                               index,
                               [Number(e.target.value), franja[1]],
@@ -626,8 +667,13 @@ export default function SuperAdminPanel() {
                         <select
                           value={franja[1]}
                           onChange={(e) => {
+                            const baseConfig =
+                              editData[b.id]?.horario_config ??
+                              b.horario_config ??
+                              {};
+
                             const newConfig = updateFranja(
-                              editData[b.id]?.horario_config,
+                              baseConfig,
                               dia,
                               index,
                               [franja[0], Number(e.target.value)],
@@ -691,9 +737,10 @@ export default function SuperAdminPanel() {
                 onClick={() => {
                   if (saving[b.id]) return; // 🔥 evita doble ejecución
 
-                  const invalid = hasInvalidConfig(
-                    editData[b.id]?.horario_config,
-                  );
+                  const config =
+                    editData[b.id]?.horario_config ?? b.horario_config ?? {};
+
+                  const invalid = hasInvalidConfig(config);
 
                   if (invalid) {
                     alert("Corregí los horarios antes de guardar");
